@@ -1,4 +1,3 @@
-
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { getAuth, connectAuthEmulator } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
@@ -9,7 +8,7 @@ dotenv.config();
 
 // Firebase configuration - Reads from environment variables
 // IMPORTANT: Ensure these environment variables are set in your .env.local file
-// The NEXT_PUBLIC_ prefix is crucial for client-side access in Next.js
+// The NEXT_PUBLIC_prefix is crucial for client-side access in Next.js
 const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
   authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -45,7 +44,7 @@ if (missingKeys.length > 0) {
    // Note: Throwing here might stop the build process or cause server errors.
    // Consider a less disruptive approach if this runs during build time.
    // For now, logging should suffice for debugging during development.
-   // throw new Error("Missing critical Firebase configuration values. Check server logs and .env.local file.");
+   
 
    // Fallback for client-side where throwing might be less ideal initially
    // You might want to handle this more gracefully in your UI later
@@ -78,6 +77,7 @@ if (missingKeys.length > 0) {
       console.error("--- THIS ERROR (e.g., auth/invalid-api-key) OFTEN MEANS YOUR API KEY OR OTHER CONFIG IS WRONG or Authentication is not enabled. ---");
       console.error("--- DOUBLE-CHECK your .env.local file AND ENSURE AUTHENTICATION IS ENABLED IN FIREBASE CONSOLE ---");
       // Don't re-throw here to allow the app to potentially load partially, but Auth will fail.
+      
       // Consider specific UI feedback if auth is unavailable.
     }
 

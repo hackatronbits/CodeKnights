@@ -1,5 +1,4 @@
-
-"use client";
+'use client';
 
 import type React from "react";
 import { createContext, useContext, useEffect, useState, useCallback } from "react";
@@ -33,17 +32,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const router = useRouter();
   const pathname = usePathname();
 
+  // Check if Firebase config is valid before doing anything else
+  const isFirebaseConfigValid = !!(
+    process.env.NEXT_PUBLIC_FIREBASE_API_KEY &&
+    process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN &&
+    process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
+  );
+
   const fetchUserProfile = useCallback(async (firebaseUserInstance: FirebaseUser) => {
      if (!db) {
         console.error("Firestore (db) not initialized, cannot fetch profile.");
+        setError("Database service is unavailable.");
         return null;
       }
     const userDocRef = doc(db, "users", firebaseUserInstance.uid);
     try {
       const userDoc = await getDoc(userDocRef);
       if (userDoc.exists()) {
-        const userData = userDoc.data() as User;
-        setCurrentUser(userData);
+        const userData = { ...userDoc.data(), uid: userDoc.id } as User; // Ensure UID is included
+        // Don't set state here, return the data
         return userData;
       } else {
         console.log("No user profile found in Firestore for UID:", firebaseUserInstance.uid);
@@ -54,109 +61,144 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setError("Failed to fetch user profile.");
       return null;
     }
-  }, []);
+  }, []); // Removed db dependency as it should be stable after init
 
   const checkProfileCompletion = useCallback(async (userInstance: FirebaseUser) => {
-    const userProfile = await fetchUserProfile(userInstance);
-    return !!userProfile?.isProfileComplete; // Return true if profile exists and is complete, false otherwise
-  }, [fetchUserProfile]);
+    // Directly fetch to check completion status without updating main state here
+    if (!db) {
+      console.error("Firestore (db) not initialized, cannot check profile completion.");
+      return false;
+    }
+    const userDocRef = doc(db, "users", userInstance.uid);
+    try {
+      const userDoc = await getDoc(userDocRef);
+      return !!userDoc.exists() && !!userDoc.data()?.isProfileComplete;
+    } catch (e) {
+      console.error("Error checking profile completion:", e);
+      return false;
+    }
+  }, []); // Removed db dependency
 
 
   useEffect(() => {
-    // Ensure Firebase Auth is initialized before setting up the listener
+    // Only proceed if Firebase config is valid and services are potentially available
+    if (!isFirebaseConfigValid) {
+        console.error("AuthContext: Invalid Firebase config detected. Auth listener will not be set up.");
+        setError("Firebase configuration is missing or invalid. Please check environment variables.");
+        setLoading(false);
+        return;
+    }
     if (!auth) {
-      console.warn("Firebase Auth not initialized. Skipping AuthStateChanged listener setup.");
-      setLoading(false); // Stop loading indicator if auth is unavailable
-      // Optionally set an error state or show a message to the user
-      setError("Authentication service is unavailable. Please check configuration.");
+      console.warn("AuthContext: Firebase Auth not initialized. Skipping AuthStateChanged listener setup.");
+      setError("Authentication service is unavailable.");
+      setLoading(false);
       return;
     }
 
+    console.log("AuthContext: Setting up onAuthStateChanged listener...");
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      console.log("AuthContext: onAuthStateChanged triggered. User:", user?.uid || "null");
       setLoading(true);
       setError(null); // Clear previous errors on auth state change
+
       if (user) {
         setFirebaseUser(user);
         const userProfile = await fetchUserProfile(user);
+        setCurrentUser(userProfile); // Update currentUser state
+
         if (userProfile) {
-          if (!userProfile.isProfileComplete && pathname !== "/profile/setup") {
-             console.log("User profile incomplete, redirecting to setup.");
-             router.push("/profile/setup");
-          } else if (userProfile.isProfileComplete && (pathname === "/" || pathname === "/login" || pathname === "/profile/setup")) {
-            console.log("User profile complete, redirecting to dashboard.");
-            router.push("/dashboard/home");
+           console.log("AuthContext: User profile fetched:", userProfile);
+          if (!userProfile.isProfileComplete) {
+            // Profile is incomplete
+            if (pathname !== "/profile/setup") {
+              console.log(`AuthContext: User profile incomplete, redirecting from ${pathname} to /profile/setup`);
+              router.push("/profile/setup");
+            } else {
+              console.log("AuthContext: User profile incomplete, already on /profile/setup.");
+            }
+          } else {
+            // Profile IS complete
+             console.log(`AuthContext: User profile complete. Current path: ${pathname}`);
+            if (pathname === "/profile/setup" || pathname === "/login" || pathname === "/") {
+              console.log("AuthContext: Redirecting from setup/login/landing to /dashboard/home");
+              router.push("/dashboard/home");
+            }
+            // else: on another dashboard page or public page, do nothing special here.
           }
-           // If profile is complete and already on a dashboard page, do nothing.
         } else {
-          // New user, profile not yet created in Firestore, might be part of signup flow
-          // If user exists in Auth but not Firestore, likely needs profile setup
+          // No Firestore profile exists for the authenticated user (e.g., during signup flow before profile setup)
+           console.log(`AuthContext: User authenticated (${user.uid}) but no Firestore profile found. Current path: ${pathname}`);
           if (pathname !== "/profile/setup") {
-            console.log("User authenticated but no Firestore profile found, redirecting to setup.");
+             console.log("AuthContext: Redirecting to /profile/setup");
             router.push("/profile/setup");
+          } else {
+             console.log("AuthContext: No Firestore profile, already on /profile/setup.");
           }
         }
       } else {
         // No user logged in
+         console.log("AuthContext: No user logged in.");
         setCurrentUser(null);
         setFirebaseUser(null);
-        // Allow access to public pages
         const publicPaths = ["/", "/login"]; // Add any other public paths
-        if (!publicPaths.includes(pathname) && pathname !== "/profile/setup") { // Allow setup page during signup flow
-           // console.log("User not authenticated, redirecting to landing page.");
-          // router.push("/"); // Redirect non-public pages to landing if not logged in
-          // Temporarily disabling redirect to allow development of other pages without login
+        if (!publicPaths.includes(pathname) && pathname !== "/profile/setup") {
+           console.log(`AuthContext: User not authenticated, redirecting from ${pathname} to /login`);
+           router.push("/login");
         }
       }
       setLoading(false);
     }, (authError) => {
-      // Handle errors from onAuthStateChanged listener itself
-      console.error("Error in onAuthStateChanged listener:", authError);
+      console.error("AuthContext: Error in onAuthStateChanged listener:", authError);
       setError("Authentication check failed. Please refresh.");
       setCurrentUser(null);
       setFirebaseUser(null);
       setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, [router, fetchUserProfile, pathname, checkProfileCompletion]); // Removed 'auth' from deps as it should be stable
+    return () => {
+       console.log("AuthContext: Cleaning up onAuthStateChanged listener.");
+       unsubscribe();
+    }
+    // Add currentUser to dependencies: when it changes (e.g., after profile completion), re-evaluate redirection logic.
+  }, [router, fetchUserProfile, pathname, checkProfileCompletion, isFirebaseConfigValid, currentUser]);
+
 
   const signUp = async (email: string, pass: string, fullName: string): Promise<FirebaseUser | null> => {
     setLoading(true);
     setError(null);
-    if (!auth || !db) {
-      setError("Firebase services not available. Cannot sign up.");
-      console.error("Attempted signup when Auth or Firestore is not initialized.");
+    if (!isFirebaseConfigValid || !auth || !db) {
+      const message = "Firebase services not available. Cannot sign up.";
+      setError(message);
+      console.error("AuthContext: " + message);
       setLoading(false);
       return null;
     }
     try {
-      console.log("Attempting to sign up user:", email);
+      console.log("AuthContext: Attempting signup for:", email);
       const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
       const user = userCredential.user;
-      console.log("Firebase Auth user created successfully:", user.uid);
+      console.log("AuthContext: Firebase Auth user created:", user.uid);
 
-      // Create a basic user document in Firestore
       const userDocRef = doc(db, "users", user.uid);
       const initialUserData: Partial<BaseUser> = {
         uid: user.uid,
         email: user.email || "",
         fullName,
         isProfileComplete: false,
-        // userType will be set during profile completion
         createdAt: Date.now(),
       };
       await setDoc(userDocRef, initialUserData, { merge: true });
-      console.log("Firestore basic user document created for:", user.uid);
+      console.log("AuthContext: Firestore basic user document created:", user.uid);
 
-      setFirebaseUser(user); // Set Firebase user immediately
-      // Don't set currentUser yet, profile is incomplete.
-      // Redirect is handled by useEffect now.
-      // router.push("/profile/setup"); // Redirect is now handled by useEffect
-      console.log("Signup successful, user should be redirected to profile setup by useEffect.");
+      // Set Firebase user, but current user will be null until profile fetched by listener
+      setFirebaseUser(user);
+      setCurrentUser(null); // Explicitly set to null as profile is not complete
+
+      // Redirect is handled by useEffect based on profile status after auth state changes
+      console.log("AuthContext: Signup successful, useEffect should handle redirection to /profile/setup.");
       return user;
     } catch (e: any) {
-      console.error("❌ Signup Failed:", e);
-      // Provide more specific error feedback
+      console.error("❌ AuthContext: Signup Failed:", e);
       if (e.code === 'auth/email-already-in-use') {
         setError('This email address is already in use.');
       } else if (e.code === 'auth/weak-password') {
@@ -173,50 +215,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logIn = async (email: string, pass: string, userTypeAttempt: UserType): Promise<FirebaseUser | null> => {
     setLoading(true);
     setError(null);
-     if (!auth) {
-      setError("Firebase Auth service not available. Cannot log in.");
-      console.error("Attempted login when Auth is not initialized.");
+     if (!isFirebaseConfigValid || !auth || !db) {
+      const message = "Firebase services not available. Cannot log in.";
+      setError(message);
+      console.error("AuthContext: " + message);
       setLoading(false);
       return null;
     }
     try {
-      console.log("Attempting login for:", email, "as", userTypeAttempt);
+      console.log("AuthContext: Attempting login for:", email, "as", userTypeAttempt);
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
       const user = userCredential.user;
-      setFirebaseUser(user); // Set Firebase user immediately
-      console.log("Firebase Auth successful for:", user.uid);
+      // Don't set state here, let onAuthStateChanged handle it
+      console.log("AuthContext: Firebase Auth successful for:", user.uid);
 
-      // Fetch profile immediately after login to check type and completion
+      // Fetch profile immediately to verify type *before* letting listener proceed
       const userProfile = await fetchUserProfile(user);
 
-      if (userProfile) {
-        console.log("User profile fetched:", userProfile);
-        if (userProfile.userType !== userTypeAttempt) {
-           const errorMsg = `Login failed: You are registered as a ${userProfile.userType}, not a ${userTypeAttempt}.`;
-           console.error(errorMsg);
-           setError(errorMsg);
-          await signOut(auth); // Sign out the user
-          setCurrentUser(null);
-          setFirebaseUser(null);
-          return null;
-        }
-        // Redirect logic is now handled by useEffect based on profile status
-         if (!userProfile.isProfileComplete) {
-             console.log("Login successful, profile incomplete.");
-             // Redirect handled by useEffect
-         } else {
-            console.log("Login successful, profile complete.");
-            // Redirect handled by useEffect
-         }
-      } else {
-         // This case means user exists in Auth but not Firestore (shouldn't happen with current signup flow)
-         console.warn("User authenticated but no Firestore profile found. Treating as incomplete profile.");
-         setError("Profile data missing. Please complete your profile.");
-          // Redirect handled by useEffect
+      if (userProfile && userProfile.userType !== userTypeAttempt) {
+        const errorMsg = `Login failed: You are registered as a ${userProfile.userType}, not a ${userTypeAttempt}.`;
+        console.error("AuthContext: " + errorMsg);
+        setError(errorMsg);
+        await signOut(auth); // Sign out the user
+        return null; // Prevent listener from setting user state
       }
+
+      // If type matches or profile doesn't exist yet, let the listener handle state updates and redirects
+      console.log("AuthContext: Login credentials valid. Listener will handle profile check and redirection.");
       return user;
     } catch (e: any) {
-      console.error("❌ Login Failed:", e);
+      console.error("❌ AuthContext: Login Failed:", e);
        if (e.code === 'auth/invalid-credential' || e.code === 'auth/user-not-found' || e.code === 'auth/wrong-password') {
          setError('Invalid email or password. Please try again.');
        } else {
@@ -232,19 +260,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     setError(null);
      if (!auth) {
-      setError("Firebase Auth service not available. Cannot log out.");
-       console.error("Attempted logout when Auth is not initialized.");
+      const message = "Firebase Auth service not available. Cannot log out.";
+      setError(message);
+       console.error("AuthContext: " + message);
       setLoading(false);
       return;
     }
     try {
       await signOut(auth);
-      setCurrentUser(null);
-      setFirebaseUser(null);
-      router.push("/"); // Redirect to landing page after logout
-      console.log("User logged out successfully.");
+      // State updates (currentUser, firebaseUser to null) handled by onAuthStateChanged listener
+      // Redirect handled by listener as well
+      console.log("AuthContext: User logged out successfully. Listener will redirect.");
     } catch (e: any) {
-      console.error("❌ Logout Failed:", e);
+      console.error("❌ AuthContext: Logout Failed:", e);
       setError(e.message || "Failed to log out.");
     } finally {
       setLoading(false);
@@ -252,57 +280,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const updateUserProfile = async (userId: string, data: Partial<User>) => {
-    setLoading(true);
+    // setLoading(true); // Maybe handle loading state specific to this operation if needed
     setError(null);
     if (!db) {
-      setError("Firestore service not available. Cannot update profile.");
-      console.error("Attempted profile update when Firestore is not initialized.");
-      setLoading(false);
+      const message = "Firestore service not available. Cannot update profile.";
+      setError(message);
+      console.error("AuthContext: " + message);
+      // setLoading(false);
       return;
     }
     try {
+      console.log("AuthContext: Updating profile for user:", userId);
       const userDocRef = doc(db, "users", userId);
-      await updateDoc(userDocRef, data);
-      console.log("Profile updated successfully for user:", userId);
-      // Re-fetch profile after update
-      if(firebaseUser && firebaseUser.uid === userId) await fetchUserProfile(firebaseUser);
+      await updateDoc(userDocRef, { ...data, updatedAt: Date.now() });
+      console.log("AuthContext: Profile updated successfully for user:", userId);
+
+      // Re-fetch profile after update to refresh context state
+      if(firebaseUser && firebaseUser.uid === userId) {
+        const updatedProfile = await fetchUserProfile(firebaseUser);
+        setCurrentUser(updatedProfile); // Directly update state here
+      }
     } catch (e: any) {
-       console.error("❌ Profile Update Failed:", e);
+       console.error("❌ AuthContext: Profile Update Failed:", e);
       setError(e.message || "Could not update profile.");
+      throw e; // Re-throw error so calling component knows it failed
     } finally {
-      setLoading(false);
+      // setLoading(false);
     }
   };
 
   const completeProfile = async (userId: string, userType: UserType, profileData: StudentProfile | AlumniProfile) => {
-    setLoading(true);
+    setLoading(true); // Use main loading indicator during profile completion
     setError(null);
      if (!db) {
-      setError("Firestore service not available. Cannot complete profile.");
-       console.error("Attempted profile completion when Firestore is not initialized.");
+       const message = "Firestore service not available. Cannot complete profile.";
+      setError(message);
+       console.error("AuthContext: " + message);
       setLoading(false);
       return;
     }
     try {
+      console.log("AuthContext: Completing profile for user:", userId);
       const userDocRef = doc(db, "users", userId);
       const finalProfileData = {
         ...profileData,
         userType,
         isProfileComplete: true,
-        updatedAt: Date.now(), // Add an updated timestamp
+        updatedAt: Date.now(),
       };
       await updateDoc(userDocRef, finalProfileData);
-      console.log("Profile completed successfully for user:", userId);
+      console.log("AuthContext: Profile completed successfully in Firestore for user:", userId);
 
-      // Re-fetch user profile to update context immediately
-       if(firebaseUser && firebaseUser.uid === userId) {
-          await fetchUserProfile(firebaseUser);
-       }
-      // Redirect is handled by useEffect now.
-      // router.push("/dashboard/home");
+      // Fetch the updated profile to trigger state change and useEffect redirection
+      if(firebaseUser && firebaseUser.uid === userId) {
+        const updatedProfile = await fetchUserProfile(firebaseUser);
+        setCurrentUser(updatedProfile); // Update state to trigger useEffect
+        console.log("AuthContext: currentUser state updated. useEffect should now redirect.");
+      } else {
+         console.warn("AuthContext: firebaseUser mismatch or missing during profile completion.");
+      }
+      // Redirect is handled by useEffect reacting to currentUser change
     } catch (e: any) {
-       console.error("❌ Profile Completion Failed:", e);
-      setError(e.message || "An unexpected error occurred while completing profile.");
+       console.error("❌ AuthContext: Profile Completion Failed:", e);
+       setError(e.message || "An unexpected error occurred while completing profile.");
+       throw e; // Re-throw error
     } finally {
       setLoading(false);
     }
@@ -311,12 +352,35 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   return (
     <AuthContext.Provider value={{ currentUser, firebaseUser, loading, error, signUp, logIn, logOut, updateUserProfile, completeProfile, checkProfileCompletion }}>
-      {!loading && children}
-      {/* Optionally show a global loading indicator while auth state resolves */}
-      {/* {loading && <GlobalLoadingIndicator />} */}
+      {/* Only render children when Firebase config is valid, otherwise show an error or loading state */}
+      {isFirebaseConfigValid ? (
+         !loading ? children : <GlobalLoadingIndicator /> // Show children when not loading, or indicator
+      ) : (
+        <FirebaseConfigErrorScreen /> // Show error screen if config is invalid
+      )}
+      {/* {loading && <GlobalLoadingIndicator />} // Moved loading inside conditional */}
     </AuthContext.Provider>
   );
 };
+
+// Helper component for loading state
+const GlobalLoadingIndicator = () => (
+  <div className="flex items-center justify-center min-h-screen bg-background">
+    <p>Loading Authentication...</p> {/* Replace with a spinner if desired */}
+  </div>
+);
+
+// Helper component for Firebase config error state
+const FirebaseConfigErrorScreen = () => (
+   <div className="flex items-center justify-center min-h-screen bg-background text-destructive p-4 text-center">
+     <div>
+       <h1 className="text-2xl font-bold mb-4">Firebase Configuration Error</h1>
+       <p>There's an issue with the Firebase setup.</p>
+       <p>Please check the console logs and ensure your <code>.env.local</code> file has the correct Firebase environment variables (<code>NEXT_PUBLIC_FIREBASE_...</code>).</p>
+     </div>
+   </div>
+ );
+
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);

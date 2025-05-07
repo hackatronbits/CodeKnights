@@ -1,3 +1,4 @@
+
 "use client";
 
 import type React from "react";
@@ -13,24 +14,35 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { firebaseUser, loading, currentUser, checkProfileCompletion } = useAuth();
+  const { firebaseUser, loading, currentUser } = useAuth(); // Removed checkProfileCompletion from here
   const router = useRouter();
 
   useEffect(() => {
     if (!loading) {
       if (!firebaseUser) {
+        // Not logged in, redirect to login
+        console.log("DashboardLayout Guard: No firebaseUser, redirecting to /login");
         router.push("/login");
       } else if (firebaseUser && (!currentUser || !currentUser.isProfileComplete)) {
-         // Check if profile is complete from Firestore as currentUser might be stale initially
-        checkProfileCompletion(firebaseUser).then(isComplete => {
-          if (!isComplete) {
-            router.push("/profile/setup");
-          }
-        });
+        // Logged in, but profile is not complete (or not loaded yet)
+        // AuthContext useEffect should handle redirecting *to* /profile/setup
+        // This guard just prevents access *to* dashboard pages if incomplete.
+        // We can double-check here, but rely on AuthContext's `currentUser` state primarily.
+         console.log("DashboardLayout Guard: User logged in but profile incomplete/null, redirecting to /profile/setup");
+         router.push("/profile/setup");
+        // Previous check using checkProfileCompletion:
+        // checkProfileCompletion(firebaseUser).then(isComplete => {
+        //   if (!isComplete) {
+        //     router.push("/profile/setup");
+        //   }
+        // });
       }
+      // If firebaseUser exists AND currentUser exists AND currentUser.isProfileComplete is true, allow access.
     }
-  }, [firebaseUser, loading, router, currentUser, checkProfileCompletion]);
+  }, [firebaseUser, loading, router, currentUser]); // Dependency on currentUser ensures re-check when profile completes
 
+  // Show loading indicator while auth state is resolving or user data is loading
+  // Also show loading if redirecting due to incomplete profile (prevents flashing content)
   if (loading || !firebaseUser || !currentUser?.isProfileComplete) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
@@ -39,6 +51,7 @@ export default function DashboardLayout({
     );
   }
 
+  // If loading is false, user exists, and profile is complete, render the layout
   return (
      <div className="flex min-h-screen bg-background">
       <DashboardSidebar />
