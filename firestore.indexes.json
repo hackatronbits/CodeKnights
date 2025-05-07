@@ -1,4 +1,85 @@
 {
-  "indexes": [],
+  "indexes": [
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "isProfileComplete",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userType",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+       "collectionGroup": "users",
+        "queryScope": "COLLECTION",
+        "fields": [
+            { "fieldPath": "isProfileComplete", "order": "ASCENDING" },
+            { "fieldPath": "userType", "order": "ASCENDING" },
+            { "fieldPath": "fieldOfInterest", "order": "ASCENDING" },
+            { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+    },
+     {
+       "collectionGroup": "users",
+        "queryScope": "COLLECTION",
+        "fields": [
+            { "fieldPath": "isProfileComplete", "order": "ASCENDING" },
+            { "fieldPath": "userType", "order": "ASCENDING" },
+            { "fieldPath": "workingField", "order": "ASCENDING" },
+            { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+    },
+    {
+       "collectionGroup": "users",
+        "queryScope": "COLLECTION",
+        "fields": [
+            { "fieldPath": "isProfileComplete", "order": "ASCENDING" },
+            { "fieldPath": "userType", "order": "ASCENDING" },
+            { "fieldPath": "university", "order": "ASCENDING" },
+            { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+    },
+    {
+       "collectionGroup": "users",
+        "queryScope": "COLLECTION",
+        "fields": [
+            { "fieldPath": "isProfileComplete", "order": "ASCENDING" },
+            { "fieldPath": "userType", "order": "ASCENDING" },
+            { "fieldPath": "passOutUniversity", "order": "ASCENDING" },
+            { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isProfileComplete", "order": "ASCENDING" },
+        { "fieldPath": "userType", "order": "ASCENDING" },
+        { "fieldPath": "fieldOfInterest", "order": "ASCENDING" },
+        { "fieldPath": "university", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+     {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "isProfileComplete", "order": "ASCENDING" },
+        { "fieldPath": "userType", "order": "ASCENDING" },
+        { "fieldPath": "workingField", "order": "ASCENDING" },
+        { "fieldPath": "passOutUniversity", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
   "fieldOverrides": []
 }
