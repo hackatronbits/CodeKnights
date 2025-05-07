@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -5,7 +6,7 @@ import { useUsers } from "@/hooks/useUsers";
 import UserCard from "@/components/UserCard";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"; // Added CardFooter
 import { useEffect, useState } from "react";
 import type { Alumni } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -170,3 +171,4 @@ export default function DashboardHomePage() {
     </div>
   );
 }
+
