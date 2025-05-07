@@ -23,7 +23,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          "antialiased font-sans flex flex-col min-h-screen",
+          "antialiased font-sans flex flex-col min-h-screen", // Ensure body itself is flex-col
           inter.variable // Apply Inter font variable
         )}
       >
@@ -36,14 +36,12 @@ export default function RootLayout({
           {/* AuthProvider wraps the main content and toaster */}
           <AuthProvider>
              {/*
-               Removed the conditional loading logic from here.
-               AuthProvider now always renders its children wrapped in the context provider.
-               Components inside (like Header or DashboardLayout) will consume
-               the `loading` state from `useAuth` to show appropriate UI.
+               AuthProvider now handles its internal loading/error states.
+               It will render a loading indicator or error screen internally,
+               or render its children when ready.
              */}
-            <div className="flex-grow flex flex-col"> {/* Ensure flex-grow is on a container */}
-              {children} {/* Render page content */}
-            </div>
+             {/* The direct children of AuthProvider will now be the page content */}
+             {children}
             <Toaster />
           </AuthProvider>
         </ThemeProvider>
