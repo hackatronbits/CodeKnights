@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -16,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const signupFormSchema = z.object({
   fullName: z.string().min(2, {
@@ -33,9 +34,10 @@ const signupFormSchema = z.object({
 type SignupFormValues = z.infer<typeof signupFormSchema>;
 
 export function SignupForm() {
-  const { signUp, error: authError } = useAuth();
+  // Use loading state from AuthContext primarily for initial load, manage submission loading locally
+  const { signUp, error: authErrorFromContext, loading: authContextLoading } = useAuth();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // Local loading state for form submission
 
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupFormSchema),
@@ -46,24 +48,39 @@ export function SignupForm() {
     },
   });
 
-  async function onSubmit(values: SignupFormValues) {
-    setIsLoading(true);
-    const user = await signUp(values.email, values.password, values.fullName);
-    setIsLoading(false);
-    if (user) {
-      toast({
-        title: "Signup Successful!",
-        description: "Redirecting you to complete your profile...",
-      });
-      // Router push handled by AuthContext
-    } else {
-      toast({
+  // Use useEffect to show toast based on authErrorFromContext changes after submission attempt
+  useEffect(() => {
+    if (authErrorFromContext && isSubmitting) { // Only show toast if related to the current submission attempt
+       toast({
         title: "Signup Failed",
-        description: authError || "An unexpected error occurred. Please try again.",
+        description: authErrorFromContext, // Display the error from context
         variant: "destructive",
       });
     }
+  }, [authErrorFromContext, isSubmitting, toast]);
+
+
+  async function onSubmit(values: SignupFormValues) {
+    setIsSubmitting(true); // Start local loading indicator
+    const user = await signUp(values.email, values.password, values.fullName);
+    
+    if (user) {
+      // Success: Toast shown by context/redirect handler or can add one here
+      toast({
+        title: "Signup Initiated!",
+        description: "Redirecting you to complete your profile...",
+      });
+      // Router push handled by AuthContext/useEffect listener
+    } else {
+      // Failure: Error message will be set in context, useEffect hook above will show toast.
+      console.log("Signup failed, error should be displayed via toast from context.");
+      // No need to call toast here as the useEffect handles it based on context error change
+    }
+    setIsSubmitting(false); // Stop local loading indicator regardless of outcome
   }
+
+  // Disable form if AuthContext is still loading initial state OR if the form is currently submitting
+  const formDisabled = authContextLoading || isSubmitting;
 
   return (
     <Form {...form}>
@@ -75,7 +92,7 @@ export function SignupForm() {
             <FormItem>
               <FormLabel>Full Name</FormLabel>
               <FormControl>
-                <Input placeholder="John Doe" {...field} />
+                <Input placeholder="John Doe" {...field} disabled={formDisabled} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -88,7 +105,7 @@ export function SignupForm() {
             <FormItem>
               <FormLabel>Email ID</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="name@example.com" {...field} />
+                <Input type="email" placeholder="name@example.com" {...field} disabled={formDisabled} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -101,17 +118,18 @@ export function SignupForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
+                <Input type="password" placeholder="•••••••• (min. 6 characters)" {...field} disabled={formDisabled} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full" disabled={isLoading}>
-          {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Sign Up
+        <Button type="submit" className="w-full" disabled={formDisabled}>
+          {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isSubmitting ? 'Signing Up...' : 'Sign Up'}
         </Button>
       </form>
     </Form>
   );
 }
+
