@@ -1,10 +1,11 @@
+
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { SignupForm } from "@/components/auth/SignupForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle, Users, MessageCircle, BookOpen } from "lucide-react";
+import { CheckCircle, Users, MessageCircle, BookOpen, UserPlus, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { MOCK_TESTIMONIALS } from "@/lib/constants";
 import Image from "next/image";
