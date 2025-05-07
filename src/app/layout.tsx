@@ -1,20 +1,13 @@
+
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google"; // Use Inter font
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import { cn } from "@/lib/utils";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" }); // Configure Inter font
 
 export const metadata: Metadata = {
   title: "MentorConnect",
@@ -30,9 +23,8 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          geistSans.variable,
-          geistMono.variable,
-          "antialiased font-sans flex flex-col min-h-screen"
+          "antialiased font-sans flex flex-col min-h-screen",
+          inter.variable // Apply Inter font variable
         )}
       >
         <ThemeProvider
@@ -41,9 +33,16 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          {/* AuthProvider wraps the main content and toaster */}
           <AuthProvider>
-            <div className="flex-grow">
-              {children}
+             {/*
+               Removed the conditional loading logic from here.
+               AuthProvider now always renders its children wrapped in the context provider.
+               Components inside (like Header or DashboardLayout) will consume
+               the `loading` state from `useAuth` to show appropriate UI.
+             */}
+            <div className="flex-grow flex flex-col"> {/* Ensure flex-grow is on a container */}
+              {children} {/* Render page content */}
             </div>
             <Toaster />
           </AuthProvider>
