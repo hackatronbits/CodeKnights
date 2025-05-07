@@ -4,35 +4,24 @@ import { getAuth, connectAuthEmulator, type Auth } from "firebase/auth";
 import { getFirestore, connectFirestoreEmulator, type Firestore } from "firebase/firestore";
 import { getFunctions, connectFunctionsEmulator, type Functions } from "firebase/functions";
 import { getStorage, connectStorageEmulator, type FirebaseStorage } from "firebase/storage";
+import { getAnalytics, type Analytics } from "firebase/analytics"; // Import Analytics
 
-// --- Environment Variable Check ---
-// Ensure your .env.local file at the root of the project contains these keys
-// obtained from your Firebase project settings (Project settings > General > Your apps > Web app > SDK setup and configuration)
-// IMPORTANT: You MUST restart your Next.js development server after modifying the .env.local file.
-const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-const authDomain = process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN;
-const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
-const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET; // Optional but recommended
-const messagingSenderId = process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID; // Optional
-const appId = process.env.NEXT_PUBLIC_FIREBASE_APP_ID; // Optional
-
-// Log the status of essential variables to help diagnose issues
-console.log("--- Firebase Config Check (firebase.ts) ---");
-console.log(`NEXT_PUBLIC_FIREBASE_API_KEY: ${apiKey ? "'****** (Set)'" : "'MISSING or UNDEFINED!'"}`);
-console.log(`NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: ${authDomain || "'MISSING or UNDEFINED!'"}`);
-console.log(`NEXT_PUBLIC_FIREBASE_PROJECT_ID: ${projectId || "'MISSING or UNDEFINED!'"}`);
-console.log("--- End Firebase Config Check ---");
+// --- Environment Variable Check (Replaced with Direct Config for now) ---
+// console.log("--- Firebase Config Check (firebase.ts) ---");
+// console.log(`Using hardcoded Firebase config values.`);
+// console.log("--- End Firebase Config Check ---");
 
 
 // --- Firebase Configuration ---
-// This object uses the environment variables read above.
+// Directly using the provided configuration values
 const firebaseConfig: FirebaseOptions = {
-  apiKey: apiKey,
-  authDomain: authDomain,
-  projectId: projectId,
-  storageBucket: storageBucket,
-  messagingSenderId: messagingSenderId,
-  appId: appId,
+  apiKey: "AIzaSyA71iZhL91C2VR76Nwr_G8KvXFagk5J81A",
+  authDomain: "mymentor-fe595.firebaseapp.com",
+  projectId: "mymentor-fe595",
+  storageBucket: "mymentor-fe595.appspot.com", // Corrected storage bucket domain
+  messagingSenderId: "294282430523",
+  appId: "1:294282430523:web:b91782281437e70567341e",
+  measurementId: "G-QPSXEC3DC5" // Optional but included
 };
 
 // --- Firebase Service Initialization ---
@@ -41,6 +30,7 @@ let auth: Auth | undefined;
 let db: Firestore | undefined;
 let functions: Functions | undefined;
 let storage: FirebaseStorage | undefined;
+let analytics: Analytics | undefined; // Add analytics variable
 let firebaseInitializationError: string | null = null;
 
 // --- Check for Missing Essential Config ---
@@ -48,10 +38,10 @@ let firebaseInitializationError: string | null = null;
 if (!firebaseConfig.apiKey || !firebaseConfig.authDomain || !firebaseConfig.projectId) {
    const errorMsg = "❌ FATAL: Missing essential Firebase configuration values (apiKey, authDomain, projectId).";
    console.error(errorMsg);
-   console.error("➡️ Please ensure NEXT_PUBLIC_FIREBASE_API_KEY, NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN, and NEXT_PUBLIC_FIREBASE_PROJECT_ID are correctly defined in your .env.local file.");
-   console.error("➡️ IMPORTANT: You MUST restart your Next.js development server after modifying the .env.local file.");
-   firebaseInitializationError = errorMsg + " Check .env.local and restart server.";
+   console.error("➡️ Check the hardcoded firebaseConfig object in src/lib/firebase.ts.");
+   firebaseInitializationError = errorMsg + " Check the hardcoded config.";
  }
+
 
 // --- Initialization Logic (Client-Side Only) ---
 if (typeof window !== 'undefined' && !firebaseInitializationError) { // Proceed only if essential config is present
@@ -60,6 +50,18 @@ if (typeof window !== 'undefined' && !firebaseInitializationError) { // Proceed 
   try {
     app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
     console.log("Firebase App Initialized Successfully.");
+
+    // Initialize Analytics right after App initialization (Client-side only)
+    try {
+        analytics = getAnalytics(app);
+        console.log("Firebase Analytics Initialized.");
+    } catch (e: any) {
+        const analyticsErrorMessage = `❌ Firebase Analytics initialization error: ${e.message}`;
+        console.error(analyticsErrorMessage, e);
+        // Don't set firebaseInitializationError here as Analytics is often optional
+        analytics = undefined; // Ensure analytics is undefined if init fails
+    }
+
 
     // 3. Initialize Firebase Authentication
     try {
@@ -76,10 +78,22 @@ if (typeof window !== 'undefined' && !firebaseInitializationError) { // Proceed 
     } catch (e: any) {
       const authErrorMessage = `❌ Firebase Authentication initialization error: ${e.message}`;
       console.error(authErrorMessage, e);
-      console.error("--- Double-check your Firebase project settings and ensure Authentication (with Email/Password sign-in) is ENABLED. Verify API Key and Auth Domain in .env.local. ---");
+      console.error("Firebase config used (relevant parts - check against your Firebase console):", {
+        apiKey: firebaseConfig.apiKey ? '****** (set)' : 'MISSING/UNDEFINED!',
+        authDomain: firebaseConfig.authDomain || 'MISSING/UNDEFINED!',
+        projectId: firebaseConfig.projectId || 'MISSING/UNDEFINED!',
+      });
+      console.error("--- Double-check your Firebase project settings and ensure Authentication (with Email/Password sign-in) is ENABLED. Verify API Key and Auth Domain. ---");
       // Set the error state ONLY if no critical config error was detected before
       if (!firebaseInitializationError) {
-         firebaseInitializationError = `Auth setup failed: ${e.message}. Check Firebase Console & .env.local. Make sure API key is valid for client-side usage.`;
+         // Construct a more informative error message
+        let detailedAuthError = `Auth setup failed. Check Firebase Console & config. Make sure API key is valid for client-side usage.`;
+        if (e.code === 'auth/invalid-api-key' || e.message.includes('invalid-api-key')) {
+            detailedAuthError += ` Detected 'invalid-api-key'.`;
+        }
+        detailedAuthError += ` Original error: ${e.message}`;
+        firebaseInitializationError = detailedAuthError;
+
       }
       auth = undefined; // Ensure auth is undefined if init fails
     }
@@ -163,7 +177,7 @@ if (typeof window !== 'undefined' && !firebaseInitializationError) { // Proceed 
       ...firebaseConfig,
       apiKey: firebaseConfig.apiKey ? '****** (Set)' : 'MISSING!', // Mask API key in log
     });
-    console.error("--- Ensure all required NEXT_PUBLIC_FIREBASE_... variables are present and correct in .env.local and the server was restarted. ---");
+    console.error("--- Ensure the provided config values are correct and the Firebase project exists and is accessible. ---");
     if (!firebaseInitializationError) { // Prioritize existing critical config error
        firebaseInitializationError = appErrorMessage;
     }
@@ -172,6 +186,7 @@ if (typeof window !== 'undefined' && !firebaseInitializationError) { // Proceed 
     db = undefined;
     functions = undefined;
     storage = undefined;
+    analytics = undefined; // Ensure analytics is undefined on app init error
   }
 } else if (typeof window !== 'undefined' && firebaseInitializationError) {
     // Log that initialization is blocked due to missing essential config on the client
@@ -192,6 +207,7 @@ export {
     db,
     functions,
     storage,
+    analytics, // Export analytics
     firebaseInitializationError
 };
 
@@ -201,16 +217,19 @@ export function getFirebaseServices() {
   // If there was an error during the initial setup phase, report it.
   if (firebaseInitializationError) {
     console.error("Firebase Initialization Failed:", firebaseInitializationError);
-    return { app: undefined, auth: undefined, db: undefined, functions: undefined, storage: undefined, error: firebaseInitializationError };
+    return { app: undefined, auth: undefined, db: undefined, functions: undefined, storage: undefined, analytics: undefined, error: firebaseInitializationError };
   }
 
   // Basic check if services are available (they might be undefined if client-side init hasn't completed or failed silently)
-  if (typeof window !== 'undefined' && (!app || !auth || !db)) {
-     console.warn("Firebase services requested but some seem unavailable. Initialization might be pending or have failed. Check logs.");
+  if (typeof window !== 'undefined' && (!app || !auth || !db /* || !analytics - analytics is optional */ )) {
+     // Warning only if essential services are missing
+     if (!app || !auth || !db) {
+         console.warn("Firebase services requested but some essential services (app, auth, db) seem unavailable. Initialization might be pending or have failed. Check logs.");
+     }
      // Return current state, which might include undefined services
-      return { app, auth, db, functions, storage, error: "Firebase services not fully initialized." };
+      return { app, auth, db, functions, storage, analytics, error: "Firebase services might not be fully initialized yet." };
   }
 
   // If no initialization error and services seem available (on client), return them.
-  return { app, auth, db, functions, storage, error: null };
+  return { app, auth, db, functions, storage, analytics, error: null };
 }
