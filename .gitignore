@@ -10,88 +10,39 @@
 # Testing
 /coverage
 
-# Next.js build files
+# Next.js build outputs
 /.next/
 /out/
 
-# Build output
-/dist
+# Build Output (Vercel)
+.vercel
+
+# Build Output (Netlify)
+.netlify
+
+# Production
 /build
 
-# Miscellaneous
+# misc
 .DS_Store
 *.pem
 
-# Debug logs
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Editor directories and files
+# Local Environment Variables
+.env*.local
+
+# Log files
+*.log
+
+# Other diagnostic files (optional)
+# *.tsbuildinfo
+
+# IDE config
+.idea
 .vscode/*
 !.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-*.sublime-workspace
-
-# Local environment variables
-.env.local
-.env.*.local
-
-# Turbopack cache
-.turbo
-
-# IDE configuration files
-.idea
-*.iml
-
-# Optional npm cache directory
-.npm
-
-# Optional eslint cache
-.eslintcache
-
-# Optional stylelint cache
-.stylelintcache
-
-# OS generated files #
-######################
-# Windows thumbnail cache files
-Thumbs.db
-ehthumbs.db
-ehthumbs_vista.db
-
-# Folder config file
-Desktop.ini
-
-# Recycle Bin used on file shares
-$RECYCLE.BIN/
-
-# Mac files
-.DS_Store?
-.AppleDouble
-.LSOverride
-
-# Icon must end with two \r
-Icon
-
-# Thumbnails
-._*
-
-# Files that might appear in the root of a volume
-.DocumentRevisions-V100
-.fseventsd
-.Spotlight-V100
-.TemporaryItems
-.Trashes
-.VolumeIcon.icns
-.com.apple.timemachine.donotpresent
-
-# Directories potentially created on remote AFP shares
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
