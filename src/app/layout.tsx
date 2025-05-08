@@ -35,13 +35,11 @@ export default function RootLayout({
         >
           {/* AuthProvider wraps the main content and toaster */}
           <AuthProvider>
-             {/*
-               AuthProvider now handles its internal loading/error states.
-               It will render a loading indicator or error screen internally,
-               or render its children when ready.
-             */}
-             {/* The direct children of AuthProvider will now be the page content */}
-             {children}
+            {/* The direct children of AuthProvider will now be the page content */}
+            {/* Ensure children can grow to fill available space */}
+            <div className="flex flex-col flex-grow">
+                 {children}
+            </div>
             <Toaster />
           </AuthProvider>
         </ThemeProvider>

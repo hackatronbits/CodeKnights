@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Briefcase, Menu } from "lucide-react"; // Removed X as SheetClose handles it
+import { Briefcase, Menu, Home, Info, Handshake, Mail } from "lucide-react"; // Use specific icons
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -11,7 +11,7 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-  SheetClose, // Import SheetClose
+  SheetClose,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
@@ -19,14 +19,15 @@ import { usePathname } from "next/navigation";
 interface NavItem {
   href: string;
   label: string;
+  icon: React.ElementType; // Added icon property
 }
 
 // Updated navItems to reflect the actual top-level pages (excluding Login)
 const navItems: NavItem[] = [
-  { href: "/", label: "Home" },
-  { href: "/about", label: "About" },
-  { href: "/services", label: "Services" },
-  { href: "/contact", label: "Contact" },
+  { href: "/", label: "Home", icon: Home },
+  { href: "/about", label: "About", icon: Info },
+  { href: "/services", label: "Services", icon: Handshake },
+  { href: "/contact", label: "Contact", icon: Mail },
 ];
 
 
@@ -52,10 +53,11 @@ export default function Header() {
               key={item.href}
               href={item.href}
               className={cn(
-                "transition-colors hover:text-foreground/80",
+                "transition-colors hover:text-foreground/80 flex items-center gap-1", // Added flex layout
                 pathname === item.href ? "text-foreground" : "text-foreground/60"
               )}
             >
+              <item.icon className="h-4 w-4" /> {/* Render icon */}
               {item.label}
             </Link>
           ))}
@@ -66,7 +68,7 @@ export default function Header() {
 
         {/* Right-aligned items (Desktop + Mobile Trigger) */}
         <div className="flex items-center space-x-2 md:space-x-4">
-           {/* Desktop Login Link - Moved here */}
+           {/* Desktop Login Link */}
            <Link
               href="/login"
               className={cn(
@@ -103,13 +105,14 @@ export default function Header() {
                        <Link
                          href={item.href}
                          className={cn(
-                           "block px-3 py-2 rounded-md text-base font-medium transition-colors",
+                           "flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium transition-colors", // Added flex layout
                            pathname === item.href
                              ? "bg-primary/10 text-primary"
                              : "text-foreground/80 hover:bg-accent hover:text-accent-foreground"
                          )}
                          onClick={() => setIsMobileMenuOpen(false)} // Close on click
                        >
+                         <item.icon className="h-5 w-5" /> {/* Mobile icon */}
                          {item.label}
                        </Link>
                      </SheetClose>
@@ -119,22 +122,24 @@ export default function Header() {
                        <Link
                           href="/login"
                           className={cn(
-                           "block px-3 py-2 rounded-md text-base font-medium transition-colors",
+                           "flex items-center gap-2 px-3 py-2 rounded-md text-base font-medium transition-colors", // Added flex layout
                            pathname === "/login"
                              ? "bg-primary/10 text-primary"
-                             : "text-foreground/80 hover:bg-accent hover:text-accent-foreground" // Corrected text color on hover
+                             : "text-foreground/80 hover:bg-accent hover:text-accent-foreground"
                            )}
                           onClick={() => setIsMobileMenuOpen(false)} // Close on click
                         >
+                          {/* Optional: Add Login icon */}
+                          {/* <LogIn className="h-5 w-5" /> */}
                           Login
                         </Link>
                      </SheetClose>
 
                  </nav>
-                 {/* Footer section in sheet for Theme Toggle */}
-                 <div className="p-4 border-t mt-auto">
+                 {/* Footer section in sheet can be removed or used for other elements */}
+                 {/* <div className="p-4 border-t mt-auto"> */}
                     {/* Theme toggle could be moved here for mobile if desired */}
-                 </div>
+                 {/* </div> */}
                </SheetContent>
              </Sheet>
            </div>
