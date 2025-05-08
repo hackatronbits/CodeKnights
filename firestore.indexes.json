@@ -1,3 +1,4 @@
+
 {
   "indexes": [
     {
@@ -14,7 +15,7 @@
         },
         {
           "fieldPath": "createdAt",
-          "order": "DESCENDING"
+          "order": "ASCENDING" 
         }
       ]
     },
@@ -83,3 +84,4 @@
   ],
   "fieldOverrides": []
 }
+
