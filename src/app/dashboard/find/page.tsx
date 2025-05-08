@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -9,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Search } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"; // Added CardFooter
 import { SKILLS_AND_FIELDS, UNIVERSITIES_SAMPLE } from "@/lib/constants";
 import type { UserType, Student, Alumni } from "@/types";
 import { useToast } from "@/hooks/use-toast";
@@ -248,3 +249,4 @@ export default function FindPage() {
     </div>
   );
 }
+
