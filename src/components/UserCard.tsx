@@ -3,25 +3,34 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Student, Alumni } from "@/types";
-import { Building, Briefcase, UserPlus, Check, MessageCircle } from "lucide-react";
+import { Building, Briefcase, UserPlus, Check, MessageCircle, Trash2, Mail } from "lucide-react"; // Added Trash2, Mail
 import { cn } from "@/lib/utils"; // Import cn
+import Link from 'next/link'; // Import Link for messaging
 
 interface UserCardProps {
   user: Student | Alumni;
   onAdd?: (userId: string) => void;
   onConnect?: (userId: string) => void; // For alumni to connect with students
+  onRemove?: (userId: string) => void; // For removing connections
   isAdded?: boolean; // For students to see if mentor is already added
   isConnected?: boolean; // For alumni to see if student is already connected
   viewerType: "student" | "alumni";
 }
 
-export default function UserCard({ user, onAdd, onConnect, isAdded, isConnected, viewerType }: UserCardProps) {
+export default function UserCard({ user, onAdd, onConnect, onRemove, isAdded, isConnected, viewerType }: UserCardProps) {
   const getInitials = (name: string) => {
     const names = name.split(' ');
     if (names.length > 1) {
       return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
     }
     return name.substring(0, 2).toUpperCase();
+  };
+
+  const getConversationLink = (otherUserId: string): string => {
+     // In a real app, you might fetch or calculate the specific conversation ID
+     // For now, we'll just link to the conversations page - the user can select the chat there.
+     // Or, if you implement direct linking, construct the path like `/dashboard/conversations/${conversationId}`
+     return `/dashboard/conversations`; // Simplified: links to the general conversations page
   };
 
   return (
@@ -36,12 +45,12 @@ export default function UserCard({ user, onAdd, onConnect, isAdded, isConnected,
         </Avatar>
         <CardTitle className="text-xl font-semibold">{user.fullName}</CardTitle>
         {user.userType === "alumni" && (
-          <p className="text-sm text-muted-foreground flex items-center gap-1">
+          <p className="text-sm text-muted-foreground flex items-center justify-center gap-1"> {/* Centered */}
             <Briefcase className="w-4 h-4" /> {user.workingField || "Field not specified"}
           </p>
         )}
         {user.userType === "student" && (
-          <p className="text-sm text-muted-foreground flex items-center gap-1">
+          <p className="text-sm text-muted-foreground flex items-center justify-center gap-1"> {/* Centered */}
             <Briefcase className="w-4 h-4" /> Interested in: {user.fieldOfInterest || "Field not specified"}
           </p>
         )}
@@ -66,8 +75,9 @@ export default function UserCard({ user, onAdd, onConnect, isAdded, isConnected,
           )}
         </div>
       </CardContent>
-      <CardFooter className="p-4 md:p-6 border-t">
-        {viewerType === "student" && user.userType === "alumni" && onAdd && (
+      <CardFooter className="p-4 md:p-6 border-t flex flex-col sm:flex-row gap-2"> {/* Use flex-col on small, row on larger */}
+        {/* --- Add/Connect Button (Only shown if onRemove is NOT provided) --- */}
+        {!onRemove && viewerType === "student" && user.userType === "alumni" && onAdd && (
           <Button
             className="w-full"
             onClick={() => onAdd(user.uid)}
@@ -78,16 +88,39 @@ export default function UserCard({ user, onAdd, onConnect, isAdded, isConnected,
             {isAdded ? "Added" : "Add Mentor"}
           </Button>
         )}
-        {viewerType === "alumni" && user.userType === "student" && onConnect && (
+        {!onRemove && viewerType === "alumni" && user.userType === "student" && onConnect && (
            <Button
             className="w-full"
             onClick={() => onConnect(user.uid)}
             disabled={isConnected}
             variant={isConnected ? "secondary" : "default"}
           >
-            {isConnected ? <Check className="mr-2 h-4 w-4" /> : <MessageCircle className="mr-2 h-4 w-4" />}
+            {/* Keep MessageCircle for connect, distinguish from direct messaging */}
+            {isConnected ? <Check className="mr-2 h-4 w-4" /> : <MessageCircle className="mr-2 h-4 w-4" />} 
             {isConnected ? "Connected" : "Connect"}
           </Button>
+        )}
+        
+        {/* --- Remove Button (Only shown if onRemove IS provided) --- */}
+        {onRemove && (
+           <div className="flex w-full gap-2"> {/* Container for buttons in remove context */}
+             <Button 
+                variant="outline" 
+                className="flex-1" 
+                asChild
+             >
+                 <Link href={getConversationLink(user.uid)}>
+                   <Mail className="mr-2 h-4 w-4"/> Message
+                 </Link>
+             </Button>
+            <Button
+                variant="destructive"
+                className="flex-1"
+                onClick={() => onRemove(user.uid)}
+             >
+                 <Trash2 className="mr-2 h-4 w-4" /> Remove
+             </Button>
+           </div>
         )}
       </CardFooter>
     </Card>
