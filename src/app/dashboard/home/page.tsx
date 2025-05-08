@@ -26,12 +26,13 @@ export default function DashboardHomePage() {
     error: alumniError,
     hasMore: hasMoreAlumni,
     loadMoreUsers: loadMoreAlumni,
-    setFilters: setAlumniFilters,
+    setFilters: setAlumniFilters, // Renamed refreshAlumni to setAlumniFilters for clarity
+    refreshUsers: refreshAlumni, // Keep refresh for button action if needed
   } = useUsers({
     userType: "alumni",
     pageSize: 3,
-    initialLoad: currentUser?.userType === "student",
-    filters: {},
+    initialLoad: currentUser?.userType === "student", // Load initially if student
+    filters: {}, // Start with no filters for random suggestions initially
   });
 
    // --- State for Alumni View ---
@@ -43,6 +44,7 @@ export default function DashboardHomePage() {
      hasMore: hasMoreStudents,
      loadMoreUsers: loadMoreStudents,
      refreshUsers: refreshStudents, // Use refresh for button action
+     setFilters: setStudentFilters, // Add setFilters for students if needed later
    } = useUsers({
      userType: "student",
      pageSize: 3,
@@ -68,6 +70,7 @@ export default function DashboardHomePage() {
 
     const studentDocRef = doc(db, "users", currentUser.uid);
     try {
+      // Check if already added to avoid redundant writes (optional but good practice)
       const currentStudentDoc = await getDoc(studentDocRef);
       const currentStudentData = currentStudentDoc.data() as typeof currentUser;
       if (currentStudentData.myMentors?.includes(alumniUid)) {
@@ -98,13 +101,11 @@ export default function DashboardHomePage() {
        suggestionFilters.university = (currentUser as Student).university;
      }
 
-     if (Object.keys(suggestionFilters).length > 0) {
-       console.log("Refreshing mentor suggestions with filters:", suggestionFilters);
-       setAlumniFilters(suggestionFilters);
-     } else {
-         console.log("Refreshing mentor suggestions with no specific filters (random).");
-         setAlumniFilters({});
-          toast({ title: "Showing General Mentor Suggestions", description: "No specific field of interest or university set in your profile for tailored suggestions." });
+     console.log("Refreshing mentor suggestions with filters:", suggestionFilters);
+     setAlumniFilters(suggestionFilters); // Trigger refetch via the hook's useEffect
+
+     if (Object.keys(suggestionFilters).length === 0) {
+          toast({ title: "Showing General Mentor Suggestions", description: "Update your profile with field of interest or university for tailored suggestions." });
      }
    }, [currentUser, setAlumniFilters, toast]);
 
@@ -134,6 +135,29 @@ export default function DashboardHomePage() {
     }
   };
 
+  // --- Callback for refreshing student suggestions (Alumni View) ---
+  // Similar logic to mentor suggestions, but could use alumni's field/uni
+  const handleRefreshStudentSuggestions = useCallback(() => {
+      if (!currentUser || currentUser.userType !== 'alumni') return;
+
+      const suggestionFilters: UseUsersOptions['filters'] = {};
+       // Example: Filter students interested in the alumni's working field
+      if ((currentUser as Alumni).workingField) {
+          suggestionFilters.fieldOfInterest = (currentUser as Alumni).workingField;
+      }
+      // Example: Filter students from the alumni's pass out university
+      if ((currentUser as Alumni).passOutUniversity) {
+           suggestionFilters.university = (currentUser as Alumni).passOutUniversity;
+      }
+
+      console.log("Refreshing student suggestions with filters:", suggestionFilters);
+      setStudentFilters(suggestionFilters); // Trigger refetch via the hook's useEffect
+
+      if (Object.keys(suggestionFilters).length === 0) {
+          toast({ title: "Showing General Student Suggestions", description: "Update your profile with working field or university for tailored suggestions." });
+      }
+  }, [currentUser, setStudentFilters, toast]);
+
 
   // --- Loading & Base States ---
   if (authLoading) {
@@ -147,7 +171,7 @@ export default function DashboardHomePage() {
   return (
     <div className="space-y-8">
       {/* Welcome Card (Common) */}
-      <Card className="shadow-md">
+      <Card className="shadow-md group transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl">
         <CardHeader>
           <CardTitle className="text-2xl md:text-3xl">
             Welcome, {currentUser.fullName}!
@@ -183,7 +207,7 @@ export default function DashboardHomePage() {
 
           {!alumniLoading && !alumniError && alumniProfiles.length === 0 && (
              <p className="text-muted-foreground text-center py-8">
-                No alumni suggestions found. Try refreshing or exploring all mentors in the 'Find Mentors' section.
+                No alumni suggestions found based on your profile. Try refreshing for general suggestions or exploring all mentors in the 'Find Mentors' section.
              </p>
           )}
 
@@ -193,8 +217,8 @@ export default function DashboardHomePage() {
                 <UserCard
                   key={profile.uid}
                   user={profile as Alumni}
-                  onAdd={handleAddMentor}
-                  isAdded={myMentorUIDs.includes(profile.uid)}
+                  onAdd={handleAddMentor} // Pass add handler
+                  isAdded={myMentorUIDs.includes(profile.uid)} // Check if already added
                   viewerType="student"
                 />
               ))}
@@ -217,9 +241,10 @@ export default function DashboardHomePage() {
         <div className="space-y-6">
            <div className="flex justify-between items-center">
              <h2 className="text-2xl font-semibold">Discover Potential Mentees</h2>
-             <Button variant="outline" onClick={refreshStudents} disabled={studentsLoading}>
+             {/* Use handleRefreshStudentSuggestions for the button */}
+             <Button variant="outline" onClick={handleRefreshStudentSuggestions} disabled={studentsLoading}>
                 <RefreshCw className={`mr-2 h-4 w-4 ${studentsLoading ? 'animate-spin' : ''}`} />
-                Refresh Students
+                Refresh Suggestions
              </Button>
            </div>
 
@@ -235,7 +260,7 @@ export default function DashboardHomePage() {
 
           {!studentsLoading && !studentsError && studentProfiles.length === 0 && (
              <p className="text-muted-foreground text-center py-8">
-                No students found currently. Students can find you via the 'Find Mentors' section. You can also browse students in 'Find Students'.
+                No student suggestions found based on your profile. Try refreshing for general suggestions or browsing students in 'Find Students'.
              </p>
           )}
 
@@ -245,8 +270,8 @@ export default function DashboardHomePage() {
                 <UserCard
                   key={profile.uid}
                   user={profile as Student}
-                  onConnect={handleConnectStudent} // Pass connect handler
-                  isConnected={myMenteeUIDs.includes(profile.uid)} // Check if already connected
+                  onConnect={handleConnectStudent} // Pass connect handler for alumni
+                  isConnected={myMenteeUIDs.includes(profile.uid)} // Check if already connected by this alumni
                   viewerType="alumni"
                 />
               ))}
@@ -270,7 +295,7 @@ export default function DashboardHomePage() {
 
 // Skeleton Component for User Card
 const UserCardSkeleton = () => (
-  <Card className="animate-pulse">
+  <Card className="animate-pulse group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-xl">
     <CardHeader className="items-center p-6">
       <div className="w-24 h-24 mb-3 rounded-full bg-muted"></div>
       <div className="h-6 w-3/4 mb-1 rounded bg-muted"></div>
@@ -285,6 +310,5 @@ const UserCardSkeleton = () => (
     </CardFooter>
   </Card>
 );
-
 
     

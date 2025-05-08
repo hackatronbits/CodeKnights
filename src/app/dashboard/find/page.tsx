@@ -24,12 +24,12 @@ export default function FindPage() {
   const { toast } = useToast();
 
   const targetUserType: UserType | undefined = currentUser?.userType === "student" ? "alumni" : "student";
-  
+
   const [filterType, setFilterType] = useState<FilterType>("none");
   const [selectedField, setSelectedField] = useState<string>("");
   const [selectedUniversity, setSelectedUniversity] = useState<string>("");
   const [activeFilters, setActiveFilters] = useState<any>({});
-  
+
   const [myConnectionUIDs, setMyConnectionUIDs] = useState<string[]>([]);
 
 
@@ -39,79 +39,102 @@ export default function FindPage() {
     filters: activeFilters,
     initialLoad: false, // Don't load initially, wait for filter application
   });
-  
+
+  // Effect to load initial connections UIDs for the current user
   useEffect(() => {
     if (currentUser) {
-      if (currentUser.userType === "student" && currentUser.myMentors) {
-        setMyConnectionUIDs(currentUser.myMentors);
-      } else if (currentUser.userType === "alumni" && currentUser.myMentees) {
-        setMyConnectionUIDs(currentUser.myMentees);
-      }
-      // Pre-fill filters if user has preferences
-      if(currentUser.userType === "student" && currentUser.fieldOfInterest){
-        setSelectedField(currentUser.fieldOfInterest);
-      }
-      if(currentUser.userType === "student" && currentUser.university){
-        setSelectedUniversity(currentUser.university);
-      }
-       if(currentUser.userType === "alumni" && currentUser.workingField){
-        setSelectedField(currentUser.workingField);
-      }
-      if(currentUser.userType === "alumni" && currentUser.passOutUniversity){
-        setSelectedUniversity(currentUser.passOutUniversity);
+      const connections = currentUser.userType === "student" ? currentUser.myMentors : currentUser.myMentees;
+      setMyConnectionUIDs(connections || []);
+
+      // Pre-fill filters based on user profile only if they haven't manually set filters yet
+      if (filterType === 'none' && Object.keys(activeFilters).length === 0) {
+          if(currentUser.userType === "student"){
+             setSelectedField(currentUser.fieldOfInterest || "");
+             setSelectedUniversity(currentUser.university || "");
+          } else { // Alumni
+             setSelectedField(currentUser.workingField || "");
+             setSelectedUniversity(currentUser.passOutUniversity || "");
+          }
       }
     }
-  }, [currentUser]);
+  }, [currentUser, filterType, activeFilters]); // Rerun if user changes or if filter state resets
 
 
   const handleApplyFilters = useCallback(() => {
     const newFilters: any = {};
+    const fieldKey = currentUser?.userType === 'student' ? 'workingField' : 'fieldOfInterest';
+    const uniKey = currentUser?.userType === 'student' ? 'passOutUniversity' : 'university';
+
     if (filterType === "fieldOfInterest" || filterType === "both") {
-      if(selectedField) newFilters.fieldOfInterest = selectedField;
+      if(selectedField) newFilters[fieldKey] = selectedField;
     }
     if (filterType === "university" || filterType === "both") {
-      if(selectedUniversity) newFilters.university = selectedUniversity;
+      if(selectedUniversity) newFilters[uniKey] = selectedUniversity;
     }
     setActiveFilters(newFilters);
     // refreshUsers will be called by useUsers hook effect when filters change
-  }, [filterType, selectedField, selectedUniversity]);
+  }, [filterType, selectedField, selectedUniversity, currentUser?.userType]);
 
   // Auto-apply filters when selections change and a filter type is active
   useEffect(() => {
+    // Apply filters immediately if a specific filter type is selected.
+    // If 'none' is selected, clear active filters to trigger showing all.
     if (filterType !== 'none') {
       handleApplyFilters();
+    } else {
+      setActiveFilters({}); // Clear filters when 'Show All' is selected
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filterType, selectedField, selectedUniversity]); // Removed handleApplyFilters from dep array
 
 
-  const handleAddConnection = async (targetUserId: string) => {
+  const handleAddOrConnect = async (targetUserId: string) => {
     if (!currentUser) return;
 
     const userDocRef = doc(db, "users", currentUser.uid);
     const fieldToUpdate = currentUser.userType === "student" ? "myMentors" : "myMentees";
-    const successMessage = currentUser.userType === "student" ? "Mentor Added" : "Student Connected";
-    const alreadyMessage = currentUser.userType === "student" ? "Already a Mentor" : "Already Connected";
+    const successTitle = currentUser.userType === "student" ? "Mentor Added" : "Student Connected";
+    const successDesc = `Successfully added to your ${fieldToUpdate.substring(2).toLowerCase()} list.`;
+    const alreadyMessageTitle = currentUser.userType === "student" ? "Already a Mentor" : "Already Connected";
+    const alreadyMessageDesc = `This user is already in your list.`;
+
+    // Optimistic UI Update
+    const previousUIDs = myConnectionUIDs;
+    setMyConnectionUIDs(prev => [...prev, targetUserId]);
 
     try {
+      // Fetch current data to double-check before writing (optional but safer against races)
       const currentUserDoc = await getDoc(userDocRef);
-      const currentUserData = currentUserDoc.data() as typeof currentUser;
-      
-      const currentConnections = currentUser.userType === "student" ? currentUserData.myMentors : currentUserData.myMentees;
-
-      if (currentConnections?.includes(targetUserId)) {
-        toast({ title: alreadyMessage, description: `This ${targetUserType} is already in your list.`, variant: "default" });
-        return;
+      if (currentUserDoc.exists()) {
+          const currentUserData = currentUserDoc.data();
+          const currentConnections = currentUser.userType === "student" ? currentUserData.myMentors : currentUserData.myMentees;
+           if (currentConnections?.includes(targetUserId)) {
+              toast({ title: alreadyMessageTitle, description: alreadyMessageDesc, variant: "default" });
+              setMyConnectionUIDs(previousUIDs); // Revert optimistic update
+              return;
+           }
+      } else {
+          throw new Error("Current user document not found.");
       }
+
 
       await updateDoc(userDocRef, {
         [fieldToUpdate]: arrayUnion(targetUserId)
       });
-      setMyConnectionUIDs(prev => [...prev, targetUserId]);
-      toast({ title: successMessage, description: `Successfully added to your ${fieldToUpdate.substring(2).toLowerCase()} list.` });
+      toast({ title: successTitle, description: successDesc });
+
+       // Add reciprocal connection (optional but recommended)
+       const otherUserDocRef = doc(db, "users", targetUserId);
+       const reciprocalField = currentUser.userType === "student" ? "myMentees" : "myMentors";
+       await updateDoc(otherUserDocRef, {
+           [reciprocalField]: arrayUnion(currentUser.uid)
+       }).catch(err => console.warn(`Could not update reciprocal connection for ${targetUserId}:`, err));
+
+
     } catch (error) {
-      console.error(`Error adding ${targetUserType}: `, error);
-      toast({ title: "Error", description: `Could not add ${targetUserType}. Please try again.`, variant: "destructive" });
+      console.error(`Error adding/connecting ${targetUserType}: `, error);
+      toast({ title: "Error", description: `Could not add/connect. Please try again.`, variant: "destructive" });
+      setMyConnectionUIDs(previousUIDs); // Revert optimistic update on error
     }
   };
 
@@ -119,7 +142,7 @@ export default function FindPage() {
   if (authLoading || !currentUser) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
-  
+
   const pageTitle = currentUser.userType === "student" ? "Find Mentors" : "Find Students";
   const fieldLabel = currentUser.userType === "student" ? "Filter by Mentor's Working Field" : "Filter by Student's Field of Interest";
   const universityLabel = currentUser.userType === "student" ? "Filter by Mentor's University" : "Filter by Student's University";
@@ -127,7 +150,7 @@ export default function FindPage() {
 
   return (
     <div className="space-y-8">
-      <Card className="shadow-md">
+      <Card className="shadow-md group transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-xl">
         <CardHeader>
           <CardTitle className="text-2xl md:text-3xl">{pageTitle}</CardTitle>
         </CardHeader>
@@ -145,7 +168,7 @@ export default function FindPage() {
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="fieldOfInterest" id="filter-field" />
-                <Label htmlFor="filter-field">Field of Interest</Label>
+                <Label htmlFor="filter-field">Field</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="university" id="filter-uni" />
@@ -189,7 +212,7 @@ export default function FindPage() {
               </Select>
             </div>
           )}
-          
+
           {filterType === 'none' && !usersLoading && !usersError && users.length === 0 && (
              <div className="text-center py-6">
                 <Button onClick={refreshUsers} size="lg">
@@ -203,7 +226,7 @@ export default function FindPage() {
       {usersLoading && (
          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {[...Array(3)].map((_, i) => (
-             <Card key={i} className="animate-pulse">
+             <Card key={i} className="animate-pulse group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-xl">
                 <CardHeader className="items-center p-6"><div className="w-24 h-24 mb-3 rounded-full bg-muted"></div><div className="h-6 w-3/4 mb-1 rounded bg-muted"></div><div className="h-4 w-1/2 rounded bg-muted"></div></CardHeader>
                 <CardContent className="p-6 space-y-2"><div className="h-4 w-full rounded bg-muted"></div><div className="h-4 w-5/6 rounded bg-muted"></div></CardContent>
                 <CardFooter className="p-6 border-t"><div className="h-10 w-full rounded bg-muted"></div></CardFooter>
@@ -211,7 +234,7 @@ export default function FindPage() {
             ))}
         </div>
       )}
-      
+
       {!usersLoading && usersError && (
         <p className="text-destructive text-center">Error: {usersError}</p>
       )}
@@ -228,10 +251,8 @@ export default function FindPage() {
             <UserCard
               key={user.uid}
               user={user}
-              onAdd={currentUser.userType === "student" ? handleAddConnection : undefined}
-              onConnect={currentUser.userType === "alumni" ? handleAddConnection : undefined}
-              isAdded={currentUser.userType === "student" && myConnectionUIDs.includes(user.uid)}
-              isConnected={currentUser.userType === "alumni" && myConnectionUIDs.includes(user.uid)}
+              onAddOrConnect={handleAddOrConnect} // Use combined prop
+              isAddedOrConnected={myConnectionUIDs.includes(user.uid)} // Use combined prop
               viewerType={currentUser.userType}
             />
           ))}
@@ -250,3 +271,4 @@ export default function FindPage() {
   );
 }
 
+    
