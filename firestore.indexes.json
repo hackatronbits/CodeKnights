@@ -15,7 +15,7 @@
         },
         {
           "fieldPath": "createdAt",
-          "order": "DESCENDING" 
+          "order": "DESCENDING"
         }
       ]
     },
@@ -84,4 +84,5 @@
   ],
   "fieldOverrides": []
 }
+
 
