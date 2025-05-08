@@ -1,57 +1,166 @@
+
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
-import { Briefcase, LogIn, UserPlus, LogOut, LayoutDashboard } from "lucide-react";
+import { Briefcase, Menu, MoreVertical, X } from "lucide-react"; // Added Menu, MoreVertical, X
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { useAuth } from "@/contexts/AuthContext";
-import { useRouter } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose, // Import SheetClose
+} from "@/components/ui/sheet";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { usePathname } from "next/navigation";
+
+interface NavItem {
+  href: string;
+  label: string;
+}
+
+const navItems: NavItem[] = [
+  { href: "/", label: "Home" },
+  { href: "/about", label: "About" },
+  { href: "/services", label: "Services" },
+  { href: "/contact", label: "Contact" },
+];
+
+const dropdownItems: NavItem[] = [
+    { href: "/option1", label: "Option 1" },
+    { href: "/option2", label: "Option 2" },
+]
 
 export default function Header() {
-  const { currentUser, firebaseUser, logOut, loading } = useAuth();
-  const router = useRouter();
-
-  const handleLogout = async () => {
-    await logOut();
-    router.push("/");
-  };
+  const pathname = usePathname();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4 md:px-8">
-        <Link href="/" className="flex items-center space-x-2">
+        {/* Logo */}
+        <Link href="/" className="flex items-center space-x-2 mr-4">
           <Briefcase className="h-6 w-6 text-primary" />
-          <span className="font-bold text-xl">MentorConnect</span>
+          <span className="font-bold text-xl hidden sm:inline-block">
+            MentorConnect
+          </span>
         </Link>
-        <div className="flex items-center space-x-2 md:space-x-4">
-          {loading ? (
-            <div className="h-8 w-24 animate-pulse rounded-md bg-muted"></div>
-          ) : firebaseUser ? (
-            <>
-              {currentUser?.isProfileComplete && (
-                 <Button variant="ghost" onClick={() => router.push("/dashboard/home")}>
-                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
-                 </Button>
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                pathname === item.href ? "text-foreground" : "text-foreground/60"
               )}
-              <Button variant="outline" onClick={handleLogout}>
-                <LogOut className="mr-2 h-4 w-4" /> Logout
-              </Button>
-            </>
-          ) : (
-            <>
-              <Link href="/login" legacyBehavior passHref>
-                <Button variant="ghost">
-                  <LogIn className="mr-2 h-4 w-4" /> Login
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Spacer to push right items */}
+        <div className="flex-1 md:hidden"></div>
+
+        <div className="flex items-center space-x-2 md:space-x-4">
+          {/* Desktop Dropdown */}
+          <div className="hidden md:block">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="h-5 w-5" />
+                  <span className="sr-only">More Options</span>
                 </Button>
-              </Link>
-              <Link href="/" legacyBehavior passHref>
-                <Button>
-                  <UserPlus className="mr-2 h-4 w-4" /> Signup
-                </Button>
-              </Link>
-            </>
-          )}
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>More</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {dropdownItems.map((item) => (
+                   <DropdownMenuItem key={item.href} asChild>
+                       <Link href={item.href}>{item.label}</Link>
+                   </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Theme Toggle */}
           <ThemeToggle />
+
+          {/* Mobile Menu Button */}
+          <div className="md:hidden">
+             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+               <SheetTrigger asChild>
+                 <Button variant="ghost" size="icon">
+                   <Menu className="h-6 w-6" />
+                   <span className="sr-only">Toggle Menu</span>
+                 </Button>
+               </SheetTrigger>
+               <SheetContent side="right" className="w-[280px] sm:w-[340px] p-0 flex flex-col">
+                 <SheetHeader className="p-4 border-b">
+                   <SheetTitle className="flex items-center gap-2">
+                      <Briefcase className="h-5 w-5 text-primary" />
+                      MentorConnect
+                   </SheetTitle>
+                 </SheetHeader>
+                 <nav className="flex flex-col p-4 space-y-2 flex-1">
+                   {navItems.map((item) => (
+                     <SheetClose key={item.href} asChild>
+                       <Link
+                         href={item.href}
+                         className={cn(
+                           "block px-3 py-2 rounded-md text-base font-medium transition-colors",
+                           pathname === item.href
+                             ? "bg-primary/10 text-primary"
+                             : "text-foreground/80 hover:bg-accent hover:text-accent-foreground"
+                         )}
+                         onClick={() => setIsMobileMenuOpen(false)} // Close on click
+                       >
+                         {item.label}
+                       </Link>
+                     </SheetClose>
+                   ))}
+                   <Separator className="my-3"/>
+                   <p className="px-3 text-sm font-medium text-muted-foreground">More Options</p>
+                   {dropdownItems.map((item) => (
+                       <SheetClose key={item.href} asChild>
+                           <Link
+                             href={item.href}
+                             className={cn(
+                               "block px-3 py-2 rounded-md text-base font-medium transition-colors",
+                               pathname === item.href
+                                 ? "bg-primary/10 text-primary"
+                                 : "text-foreground/80 hover:bg-accent hover:text-accent-foreground"
+                              )}
+                             onClick={() => setIsMobileMenuOpen(false)} // Close on click
+                           >
+                             {item.label}
+                           </Link>
+                        </SheetClose>
+                    ))}
+                 </nav>
+                 {/* Footer section in sheet for Theme Toggle */}
+                 <div className="p-4 border-t mt-auto">
+                    {/* Consider adding other actions here if needed */}
+                 </div>
+               </SheetContent>
+             </Sheet>
+           </div>
         </div>
       </div>
     </header>
