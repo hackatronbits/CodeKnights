@@ -1,6 +1,8 @@
+
 "use client";
 
 import Link from "next/link";
+import type React from "react"; // Import React for type definitions
 import { usePathname } from "next/navigation";
 import { Home, Search, BookOpen, MessageSquare, Users, UserCircle, LogOut, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,7 +20,7 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-  SidebarInset,
+  SidebarInset, // Import SidebarInset
 } from "@/components/ui/sidebar";
 
 
@@ -41,7 +43,8 @@ const navItems: NavItem[] = [
   { href: "/dashboard/profile", label: "My Profile", icon: UserCircle, student: true, alumni: true },
 ];
 
-export default function DashboardSidebar() {
+// Update component props to accept children
+export default function DashboardSidebar({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { currentUser, logOut } = useAuth();
 
@@ -53,6 +56,7 @@ export default function DashboardSidebar() {
   });
 
   return (
+    // Wrap everything in SidebarProvider
     <SidebarProvider defaultOpen>
        <Sidebar collapsible="icon">
         <SidebarHeader className="p-4 justify-between items-center flex">
@@ -92,7 +96,10 @@ export default function DashboardSidebar() {
           </Button>
         </SidebarFooter>
       </Sidebar>
-      <SidebarInset /> {/* This is required for the content to be pushed correctly */}
+      {/* Render SidebarInset here and place children inside it */}
+      <SidebarInset className="p-4 md:p-8 overflow-y-auto">
+        {children}
+      </SidebarInset>
     </SidebarProvider>
   );
 }
