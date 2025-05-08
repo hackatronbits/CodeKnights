@@ -3,7 +3,7 @@
 
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { MessageSquare, Loader2 } from "lucide-react";
+import { MessageSquareText, Loader2 } from "lucide-react"; // Changed icon
 import { useAuth } from '@/contexts/AuthContext';
 import ConversationList from '@/components/dashboard/ConversationList';
 import ChatWindow from '@/components/dashboard/ChatWindow';
@@ -26,13 +26,14 @@ export default function ConversationsPage() {
   const selectedParticipantInfo: ParticipantInfo | null = useMemo(() => {
     if (!selectedConversationId || !selectedParticipantUid) return null;
     const selectedConv = conversations.find(c => c.id === selectedConversationId);
+    // Ensure participantInfo exists before accessing
     return selectedConv?.participantInfo?.[selectedParticipantUid] || null;
   }, [selectedConversationId, selectedParticipantUid, conversations]);
 
 
   if (authLoading) {
      return (
-        <div className="flex h-full flex-1 items-center justify-center">
+        <div className="flex h-[calc(100vh-theme(spacing.16))] flex-1 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
      );
@@ -44,7 +45,8 @@ export default function ConversationsPage() {
   }
 
   return (
-    <div className="flex h-[calc(100vh-theme(spacing.16))] border border-border rounded-lg overflow-hidden shadow-md"> {/* Adjust container height */}
+    <div className="flex h-[calc(100vh-theme(spacing.16))] border border-border rounded-lg overflow-hidden shadow-lg bg-card"> {/* Adjust height & add bg */}
+      {/* Conversation List Pane */}
       <ConversationList
         conversations={conversations}
         selectedConversationId={selectedConversationId}
@@ -53,29 +55,33 @@ export default function ConversationsPage() {
         loading={conversationsLoading}
       />
 
-      <div className="flex-1 flex flex-col bg-background">
+      {/* Chat Window Pane */}
+      <div className="flex-1 flex flex-col bg-background"> {/* Chat area background */}
         {conversationsError && (
-           <div className="p-4 text-center text-destructive">
+           <div className="p-4 text-center text-destructive border-b"> {/* Added border */}
               Error loading conversations: {conversationsError}
             </div>
         )}
         {!selectedConversationId ? (
-          <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
-             <MessageSquare className="w-16 h-16 text-primary/30 mb-4" />
-             <h2 className="text-xl font-semibold text-foreground mb-2">Select a Conversation</h2>
-             <p className="text-muted-foreground max-w-xs">
-               Choose a conversation from the list on the left to start chatting.
+          // Placeholder when no conversation is selected
+          <div className="flex flex-1 flex-col items-center justify-center p-8 text-center bg-muted/30"> {/* Subtle background */}
+             <MessageSquareText className="w-20 h-20 text-primary/40 mb-6" /> {/* Larger icon */}
+             <h2 className="text-2xl font-semibold text-foreground mb-3">Your Conversations</h2>
+             <p className="text-muted-foreground max-w-sm text-base">
+               Select a conversation from the list on the left to view messages and continue chatting.
              </p>
            </div>
         ) : (
+          // Render ChatWindow only when a conversation is selected
           <ChatWindow
             key={selectedConversationId} // Force re-render when conversation changes
             conversationId={selectedConversationId}
             otherParticipantUid={selectedParticipantUid!} // We know this is set if conversationId is set
-            otherParticipantInfo={selectedParticipantInfo}
+            otherParticipantInfo={selectedParticipantInfo} // Pass participant info
           />
         )}
       </div>
     </div>
   );
 }
+
