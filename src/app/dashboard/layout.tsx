@@ -1,9 +1,9 @@
-
 "use client";
 
 import type React from "react";
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import { Toaster } from "@/components/ui/toaster";
+import QuickChatbot from "@/components/dashboard/QuickChatbot"; // Import the chatbot
 
 export default function DashboardLayout({
   children,
@@ -17,6 +17,7 @@ export default function DashboardLayout({
        {/* Pass children directly to the sidebar component */}
       <DashboardSidebar>{children}</DashboardSidebar>
       {/* Removed the separate <main> tag. SidebarInset within DashboardSidebar now handles the main content area */}
+      <QuickChatbot /> {/* Add the chatbot FAB and Sheet */}
       <Toaster /> {/* Keep toaster for dashboard-specific notifications */}
     </div>
   );
