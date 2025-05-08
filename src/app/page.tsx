@@ -1,3 +1,4 @@
+"use client"; // Add this directive
 
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -36,7 +37,7 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" asChild className="shadow-lg hover:shadow-xl transition-shadow">
-                   <Link href="/#signup">Get Started Today</Link>
+                   <Link href="#signup">Get Started Today</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild className="shadow-lg hover:shadow-xl transition-shadow">
                    <Link href="/about">Learn More</Link>
