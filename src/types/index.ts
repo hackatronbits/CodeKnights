@@ -9,7 +9,8 @@ export interface BaseUser {
   contactNo?: string;
   address?: string;
   isProfileComplete: boolean;
-  createdAt: number; // Timestamp
+  createdAt: number; // Timestamp represented as number (milliseconds since epoch)
+  updatedAt?: number; // Timestamp represented as number
 }
 
 export interface StudentProfile {
@@ -36,4 +37,34 @@ export interface Testimonial {
   role: string; // e.g., "Student at XYZ University", "Software Engineer @ ABC Corp"
   feedback: string;
   avatarUrl?: string;
+}
+
+// --- Chat Feature Types ---
+
+export interface ParticipantInfo {
+  fullName: string;
+  profileImageUrl?: string;
+}
+
+export interface Conversation {
+  id: string; // Firestore document ID (e.g., uid1_uid2)
+  participants: string[]; // Array of two user UIDs
+  participantInfo: {
+    [uid: string]: ParticipantInfo;
+  };
+  lastMessage?: {
+    text: string;
+    senderUid: string;
+    timestamp: number; // Firestore Timestamp converted to number
+  };
+  lastUpdatedAt: number; // Firestore Timestamp converted to number
+}
+
+export interface Message {
+  id: string; // Firestore document ID
+  conversationId: string;
+  senderUid: string;
+  receiverUid: string;
+  text: string;
+  timestamp: number; // Firestore Timestamp converted to number
 }
