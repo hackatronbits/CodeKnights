@@ -9,7 +9,7 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
+  FormLabel, // Keep this for the Edit Form
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -29,6 +29,7 @@ import type { Student, Alumni, User } from "@/types";
 import { COURSES, UNIVERSITIES_SAMPLE, SKILLS_AND_FIELDS } from "@/lib/constants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label"; // Import the standard Label for view mode
 
 
 const profileEditBaseSchema = z.object({
@@ -104,7 +105,7 @@ export default function MyProfilePage() {
   if (authLoading || !currentUser) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
-  
+
   const getInitials = (name: string) => {
     const names = name.split(' ');
     if (names.length > 1) {
@@ -142,27 +143,28 @@ export default function MyProfilePage() {
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 pt-4 border-t">
-                <div><FormLabel>Contact Number:</FormLabel><p>{currentUser.contactNo || "Not set"}</p></div>
-                <div><FormLabel>Address:</FormLabel><p>{currentUser.address || "Not set"}</p></div>
+                 {/* Use standard Label here */}
+                <div><Label className="font-semibold text-muted-foreground">Contact Number:</Label><p>{currentUser.contactNo || "Not set"}</p></div>
+                <div><Label className="font-semibold text-muted-foreground">Address:</Label><p>{currentUser.address || "Not set"}</p></div>
 
                 {currentUser.userType === "student" && (
                   <>
-                    <div><FormLabel>Pursuing Course:</FormLabel><p>{(currentUser as Student).pursuingCourse || "Not set"}</p></div>
-                    <div><FormLabel>University:</FormLabel><p>{(currentUser as Student).university || "Not set"}</p></div>
-                    <div><FormLabel>Field of Interest:</FormLabel><p>{(currentUser as Student).fieldOfInterest || "Not set"}</p></div>
+                    <div><Label className="font-semibold text-muted-foreground">Pursuing Course:</Label><p>{(currentUser as Student).pursuingCourse || "Not set"}</p></div>
+                    <div><Label className="font-semibold text-muted-foreground">University:</Label><p>{(currentUser as Student).university || "Not set"}</p></div>
+                    <div><Label className="font-semibold text-muted-foreground">Field of Interest:</Label><p>{(currentUser as Student).fieldOfInterest || "Not set"}</p></div>
                   </>
                 )}
                 {currentUser.userType === "alumni" && (
                   <>
-                    <div><FormLabel>Passed Out University:</FormLabel><p>{(currentUser as Alumni).passOutUniversity || "Not set"}</p></div>
-                    <div><FormLabel>Working Field:</FormLabel><p>{(currentUser as Alumni).workingField || "Not set"}</p></div>
-                    <div className="md:col-span-2"><FormLabel>Bio:</FormLabel><p className="whitespace-pre-wrap">{(currentUser as Alumni).bio || "Not set"}</p></div>
+                    <div><Label className="font-semibold text-muted-foreground">Passed Out University:</Label><p>{(currentUser as Alumni).passOutUniversity || "Not set"}</p></div>
+                    <div><Label className="font-semibold text-muted-foreground">Working Field:</Label><p>{(currentUser as Alumni).workingField || "Not set"}</p></div>
+                    <div className="md:col-span-2"><Label className="font-semibold text-muted-foreground">Bio:</Label><p className="whitespace-pre-wrap">{(currentUser as Alumni).bio || "Not set"}</p></div>
                   </>
                 )}
               </div>
             </div>
           ) : (
-            // Edit Mode
+            // Edit Mode - Use FormLabel within FormField here
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 p-4 md:p-6">
                 <FormField control={form.control} name="fullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
