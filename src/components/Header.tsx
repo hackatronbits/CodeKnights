@@ -26,9 +26,8 @@ interface NavItem {
 const navItems: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
-  // Removed Services and Contact as they don't exist currently
-  // { href: "/services", label: "Services" },
-  // { href: "/contact", label: "Contact" },
+  { href: "/services", label: "Services" }, // Re-added Services
+  { href: "/contact", label: "Contact" },   // Re-added Contact
 ];
 
 
