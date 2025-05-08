@@ -3,17 +3,10 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Briefcase, Menu, MoreVertical, X } from "lucide-react"; // Added Menu, MoreVertical, X
+import { Briefcase, Menu, MoreVertical, X } from "lucide-react"; // Removed MoreVertical as dropdown is removed
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+// Removed DropdownMenu components as they are no longer used
 import {
   Sheet,
   SheetContent,
@@ -38,10 +31,7 @@ const navItems: NavItem[] = [
   { href: "/contact", label: "Contact" },
 ];
 
-const dropdownItems: NavItem[] = [
-    { href: "/option1", label: "Option 1" },
-    { href: "/option2", label: "Option 2" },
-]
+// Removed dropdownItems array
 
 export default function Header() {
   const pathname = usePathname();
@@ -78,8 +68,8 @@ export default function Header() {
         <div className="flex-1 md:hidden"></div>
 
         <div className="flex items-center space-x-2 md:space-x-4">
-          {/* Desktop Dropdown */}
-          <div className="hidden md:block">
+          {/* Desktop Dropdown - Removed */}
+          {/* <div className="hidden md:block">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon">
@@ -97,7 +87,7 @@ export default function Header() {
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+          </div> */}
 
           {/* Theme Toggle */}
           <ThemeToggle />
@@ -135,7 +125,8 @@ export default function Header() {
                        </Link>
                      </SheetClose>
                    ))}
-                   <Separator className="my-3"/>
+                   {/* Removed separator and dropdown items from mobile menu */}
+                   {/* <Separator className="my-3"/>
                    <p className="px-3 text-sm font-medium text-muted-foreground">More Options</p>
                    {dropdownItems.map((item) => (
                        <SheetClose key={item.href} asChild>
@@ -152,7 +143,7 @@ export default function Header() {
                              {item.label}
                            </Link>
                         </SheetClose>
-                    ))}
+                    ))} */}
                  </nav>
                  {/* Footer section in sheet for Theme Toggle */}
                  <div className="p-4 border-t mt-auto">
