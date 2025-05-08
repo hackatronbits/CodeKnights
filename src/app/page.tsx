@@ -9,6 +9,7 @@ import { CheckCircle, Users, MessageCircle, BookOpen, UserPlus, Briefcase } from
 import Link from "next/link";
 import { MOCK_TESTIMONIALS } from "@/lib/constants";
 import Image from "next/image";
+import { cn } from "@/lib/utils"; // Import cn
 
 export default function LandingPage() {
   return (
@@ -35,8 +36,8 @@ export default function LandingPage() {
               </div>
             </div>
             <div className="hidden md:block">
-              <Image 
-                src="https://picsum.photos/seed/mentorconnect-hero/600/400" 
+              <Image
+                src="https://picsum.photos/seed/mentorconnect-hero/600/400"
                 alt="Mentorship illustration"
                 width={600}
                 height={400}
@@ -94,15 +95,21 @@ export default function LandingPage() {
         {/* Testimonials Section */}
         <section className="py-16 md:py-24 bg-secondary/30">
           <div className="container px-4 md:px-8">
-            <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 text-foreground">
+            <h2 className={cn(
+              "text-3xl md:text-4xl font-bold text-center mb-12 text-foreground",
+              "transition-transform duration-300 ease-in-out hover:scale-105" // Added hover effect classes
+            )}>
               What Our Users Say
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
               {MOCK_TESTIMONIALS.map((testimonial) => (
-                <Card key={testimonial.id} className="shadow-lg">
+                <Card key={testimonial.id} className={cn(
+                    "shadow-lg flex flex-col", // Ensure flex-col for consistent height if needed
+                    "group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl"
+                )}>
                   <CardHeader>
                     <div className="flex items-center space-x-4">
-                      <Avatar>
+                      <Avatar className="group-hover:ring-2 group-hover:ring-primary/50 transition-all duration-300">
                         <AvatarImage src={testimonial.avatarUrl} alt={testimonial.name} data-ai-hint="profile person" />
                         <AvatarFallback>{testimonial.name.substring(0, 2)}</AvatarFallback>
                       </Avatar>
@@ -112,7 +119,7 @@ export default function LandingPage() {
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="flex-grow"> {/* Allow content to grow */}
                     <p className="text-muted-foreground italic">"{testimonial.feedback}"</p>
                   </CardContent>
                 </Card>
@@ -125,8 +132,8 @@ export default function LandingPage() {
         <section id="about" className="py-16 md:py-24">
           <div className="container px-4 md:px-8 grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <Image 
-                src="https://picsum.photos/seed/mentorconnect-about/500/350" 
+              <Image
+                src="https://picsum.photos/seed/mentorconnect-about/500/350"
                 alt="Team working together"
                 width={500}
                 height={350}
@@ -154,7 +161,7 @@ export default function LandingPage() {
               MentorConnect offers a seamless experience for both students and alumni. Discover how our platform empowers you to achieve your mentorship goals.
             </p>
             <div className="grid md:grid-cols-3 gap-8 text-left">
-              <Card className="shadow-lg">
+              <Card className="shadow-lg group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <UserPlus className="text-primary" /> For Students
@@ -167,7 +174,7 @@ export default function LandingPage() {
                   <p>Access resources and track your mentorship progress.</p>
                 </CardContent>
               </Card>
-              <Card className="shadow-lg">
+              <Card className="shadow-lg group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Briefcase className="text-primary" /> For Alumni
@@ -180,7 +187,7 @@ export default function LandingPage() {
                   <p>Manage your mentorship connections and availability.</p>
                 </CardContent>
               </Card>
-              <Card className="shadow-lg">
+              <Card className="shadow-lg group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CheckCircle className="text-primary" /> Platform Features
