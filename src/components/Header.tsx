@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Briefcase, Menu, X } from "lucide-react"; // Removed MoreVertical
+import { Briefcase, Menu } from "lucide-react"; // Removed X as SheetClose handles it
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
@@ -13,7 +13,6 @@ import {
   SheetTrigger,
   SheetClose, // Import SheetClose
 } from "@/components/ui/sheet";
-import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
 import { usePathname } from "next/navigation";
 
@@ -22,12 +21,12 @@ interface NavItem {
   label: string;
 }
 
-// Updated navItems to reflect the actual top-level pages
+// Updated navItems to reflect the actual top-level pages (excluding Login)
 const navItems: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
-  { href: "/services", label: "Services" }, // Re-added Services
-  { href: "/contact", label: "Contact" },   // Re-added Contact
+  { href: "/services", label: "Services" },
+  { href: "/contact", label: "Contact" },
 ];
 
 
@@ -39,14 +38,14 @@ export default function Header() {
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 max-w-screen-2xl items-center justify-between px-4 md:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2 mr-4">
+        <Link href="/" className="flex items-center space-x-2 mr-4 flex-shrink-0">
           <Briefcase className="h-6 w-6 text-primary" />
           <span className="font-bold text-xl hidden sm:inline-block">
             MentorConnect
           </span>
         </Link>
 
-        {/* Desktop Navigation */}
+        {/* Desktop Navigation (Items Only) */}
         <nav className="hidden md:flex items-center space-x-6 text-sm font-medium">
           {navItems.map((item) => (
             <Link
@@ -60,22 +59,24 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
-           {/* Direct Login Link */}
+        </nav>
+
+        {/* Spacer to push right items */}
+        <div className="flex-grow"></div>
+
+        {/* Right-aligned items (Desktop + Mobile Trigger) */}
+        <div className="flex items-center space-x-2 md:space-x-4">
+           {/* Desktop Login Link - Moved here */}
            <Link
               href="/login"
               className={cn(
-                "transition-colors hover:text-foreground/80",
+                "hidden md:inline-flex transition-colors hover:text-foreground/80 text-sm font-medium", // Use similar styling as nav items
                  pathname === "/login" ? "text-foreground" : "text-foreground/60"
                )}
             >
               Login
             </Link>
-        </nav>
 
-        {/* Spacer to push right items */}
-        <div className="flex-1 md:hidden"></div>
-
-        <div className="flex items-center space-x-2 md:space-x-4">
           {/* Theme Toggle */}
           <ThemeToggle />
 
@@ -96,6 +97,7 @@ export default function Header() {
                    </SheetTitle>
                  </SheetHeader>
                  <nav className="flex flex-col p-4 space-y-2 flex-1">
+                   {/* Mobile Nav Items */}
                    {navItems.map((item) => (
                      <SheetClose key={item.href} asChild>
                        <Link
@@ -120,7 +122,7 @@ export default function Header() {
                            "block px-3 py-2 rounded-md text-base font-medium transition-colors",
                            pathname === "/login"
                              ? "bg-primary/10 text-primary"
-                             : "text-foreground/80 hover:bg-accent hover:text/accent-foreground"
+                             : "text-foreground/80 hover:bg-accent hover:text-accent-foreground" // Corrected text color on hover
                            )}
                           onClick={() => setIsMobileMenuOpen(false)} // Close on click
                         >
@@ -131,7 +133,7 @@ export default function Header() {
                  </nav>
                  {/* Footer section in sheet for Theme Toggle */}
                  <div className="p-4 border-t mt-auto">
-                    {/* Consider adding other actions here if needed */}
+                    {/* Theme toggle could be moved here for mobile if desired */}
                  </div>
                </SheetContent>
              </Sheet>
