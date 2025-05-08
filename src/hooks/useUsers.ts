@@ -23,6 +23,7 @@ export function useUsers(options: UseUsersOptions = {}) {
   const [error, setError] = useState<string | null>(null);
   const [lastVisible, setLastVisible] = useState<DocumentData | null>(null);
   const [hasMore, setHasMore] = useState<boolean>(true);
+  // Fix: Correct useState destructuring syntax
   const [currentFilters, setCurrentFilters] = useState(initialFilters); // Internal state for filters
 
   const fetchUsers = useCallback(async (loadMore = false, filtersToUse: UseUsersOptions['filters']) => {
