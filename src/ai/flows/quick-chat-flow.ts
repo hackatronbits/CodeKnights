@@ -11,7 +11,8 @@ import { ai } from '@/ai/genkit';
 import { z } from 'genkit';
 
 // Input schema for the chatbot flow
-export const QuickChatInputSchema = z.object({
+// REMOVED export keyword
+const QuickChatInputSchema = z.object({
   message: z.string().describe('The user\'s message to the chatbot.'),
   // Optional: Add conversation history if needed for more context
   // history: z.array(z.object({ role: z.enum(['user', 'model']), text: z.string() })).optional(),
@@ -19,7 +20,8 @@ export const QuickChatInputSchema = z.object({
 export type QuickChatInput = z.infer<typeof QuickChatInputSchema>;
 
 // Output schema for the chatbot flow
-export const QuickChatOutputSchema = z.object({
+// REMOVED export keyword
+const QuickChatOutputSchema = z.object({
   response: z.string().describe('The chatbot\'s response message.'),
 });
 export type QuickChatOutput = z.infer<typeof QuickChatOutputSchema>;
