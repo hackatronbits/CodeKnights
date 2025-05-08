@@ -1,4 +1,21 @@
 
+<!-- 
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+IMPORTANT: DEPLOY THESE INDEXES!
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+This file defines the necessary Firestore indexes for the application queries.
+You MUST deploy these indexes to your Firebase project for the queries to work correctly.
+
+Run the following command in your project's root directory using the Firebase CLI:
+
+firebase deploy --only firestore:indexes
+
+Index building can take some time after deployment, depending on your data size.
+If you continue to see 'INDEX REQUIRED' errors after deployment and waiting,
+double-check the Firebase Console to ensure the indexes were created successfully
+and match the definitions below exactly.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+ -->
 {
   "indexes": [
     {
@@ -20,147 +37,67 @@
       ]
     },
     {
-      "collectionGroup": "users",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "isProfileComplete",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "userType",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "fieldOfInterest",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
+       "collectionGroup": "users",
+        "queryScope": "COLLECTION",
+        "fields": [
+            { "fieldPath": "isProfileComplete", "order": "ASCENDING" },
+            { "fieldPath": "userType", "order": "ASCENDING" },
+            { "fieldPath": "fieldOfInterest", "order": "ASCENDING" },
+            { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+    },
+     {
+       "collectionGroup": "users",
+        "queryScope": "COLLECTION",
+        "fields": [
+            { "fieldPath": "isProfileComplete", "order": "ASCENDING" },
+            { "fieldPath": "userType", "order": "ASCENDING" },
+            { "fieldPath": "workingField", "order": "ASCENDING" },
+            { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+    },
+    {
+       "collectionGroup": "users",
+        "queryScope": "COLLECTION",
+        "fields": [
+            { "fieldPath": "isProfileComplete", "order": "ASCENDING" },
+            { "fieldPath": "userType", "order": "ASCENDING" },
+            { "fieldPath": "university", "order": "ASCENDING" },
+            { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
+    },
+    {
+       "collectionGroup": "users",
+        "queryScope": "COLLECTION",
+        "fields": [
+            { "fieldPath": "isProfileComplete", "order": "ASCENDING" },
+            { "fieldPath": "userType", "order": "ASCENDING" },
+            { "fieldPath": "passOutUniversity", "order": "ASCENDING" },
+            { "fieldPath": "createdAt", "order": "DESCENDING" }
+        ]
     },
     {
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "isProfileComplete",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "userType",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "workingField",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "isProfileComplete", "order": "ASCENDING" },
+        { "fieldPath": "userType", "order": "ASCENDING" },
+        { "fieldPath": "fieldOfInterest", "order": "ASCENDING" },
+        { "fieldPath": "university", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     },
-    {
+     {
       "collectionGroup": "users",
       "queryScope": "COLLECTION",
       "fields": [
-        {
-          "fieldPath": "isProfileComplete",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "userType",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "university",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "users",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "isProfileComplete",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "userType",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "passOutUniversity",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "users",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "isProfileComplete",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "userType",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "fieldOfInterest",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "university",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "users",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "isProfileComplete",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "userType",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "workingField",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "passOutUniversity",
-          "order": "ASCENDING"
-        },
-        {
-          "fieldPath": "createdAt",
-          "order": "DESCENDING"
-        }
+        { "fieldPath": "isProfileComplete", "order": "ASCENDING" },
+        { "fieldPath": "userType", "order": "ASCENDING" },
+        { "fieldPath": "workingField", "order": "ASCENDING" },
+        { "fieldPath": "passOutUniversity", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
       ]
     }
   ],
   "fieldOverrides": []
 }
-
-<!-- IMPORTANT: This file defines the necessary Firestore indexes. You MUST deploy these indexes to your Firebase project for the queries to work correctly. Use the Firebase CLI command: `firebase deploy --only firestore:indexes`. Index building can take some time after deployment. -->
