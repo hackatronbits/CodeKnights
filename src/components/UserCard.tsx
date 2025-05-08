@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { Student, Alumni } from "@/types";
 import { Building, Briefcase, UserPlus, Check, MessageCircle } from "lucide-react";
+import { cn } from "@/lib/utils"; // Import cn
 
 interface UserCardProps {
   user: Student | Alumni;
@@ -24,9 +25,12 @@ export default function UserCard({ user, onAdd, onConnect, isAdded, isConnected,
   };
 
   return (
-    <Card className="w-full max-w-sm shadow-lg hover:shadow-xl transition-shadow duration-300 flex flex-col">
+    <Card className={cn(
+        "w-full max-w-sm shadow-lg flex flex-col",
+        "group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl" // Added group and hover effects
+     )}>
       <CardHeader className="items-center text-center p-4 md:p-6">
-        <Avatar className="w-24 h-24 mb-3 border-2 border-primary">
+        <Avatar className="w-24 h-24 mb-3 border-2 border-primary group-hover:border-primary/70 transition-colors duration-300"> {/* Optional: Change border on hover */}
           <AvatarImage src={user.profileImageUrl || `https://picsum.photos/seed/${user.uid}/200/200`} alt={user.fullName} data-ai-hint="profile person" />
           <AvatarFallback className="text-3xl">{getInitials(user.fullName)}</AvatarFallback>
         </Avatar>
@@ -64,9 +68,9 @@ export default function UserCard({ user, onAdd, onConnect, isAdded, isConnected,
       </CardContent>
       <CardFooter className="p-4 md:p-6 border-t">
         {viewerType === "student" && user.userType === "alumni" && onAdd && (
-          <Button 
-            className="w-full" 
-            onClick={() => onAdd(user.uid)} 
+          <Button
+            className="w-full"
+            onClick={() => onAdd(user.uid)}
             disabled={isAdded}
             variant={isAdded ? "secondary" : "default"}
           >
@@ -75,9 +79,9 @@ export default function UserCard({ user, onAdd, onConnect, isAdded, isConnected,
           </Button>
         )}
         {viewerType === "alumni" && user.userType === "student" && onConnect && (
-           <Button 
-            className="w-full" 
-            onClick={() => onConnect(user.uid)} 
+           <Button
+            className="w-full"
+            onClick={() => onConnect(user.uid)}
             disabled={isConnected}
             variant={isConnected ? "secondary" : "default"}
           >
