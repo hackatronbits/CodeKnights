@@ -1,12 +1,10 @@
-
 "use client";
 
 import * as React from "react";
 import Link from "next/link";
-import { Briefcase, Menu, MoreVertical, X } from "lucide-react"; // Removed MoreVertical as dropdown is removed
+import { Briefcase, Menu, X } from "lucide-react"; // Removed MoreVertical
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
-// Removed DropdownMenu components as they are no longer used
 import {
   Sheet,
   SheetContent,
@@ -24,14 +22,15 @@ interface NavItem {
   label: string;
 }
 
+// Updated navItems to reflect the actual top-level pages
 const navItems: NavItem[] = [
   { href: "/", label: "Home" },
   { href: "/about", label: "About" },
-  { href: "/services", label: "Services" },
-  { href: "/contact", label: "Contact" },
+  // Removed Services and Contact as they don't exist currently
+  // { href: "/services", label: "Services" },
+  // { href: "/contact", label: "Contact" },
 ];
 
-// Removed dropdownItems array
 
 export default function Header() {
   const pathname = usePathname();
@@ -62,33 +61,22 @@ export default function Header() {
               {item.label}
             </Link>
           ))}
+           {/* Direct Login Link */}
+           <Link
+              href="/login"
+              className={cn(
+                "transition-colors hover:text-foreground/80",
+                 pathname === "/login" ? "text-foreground" : "text-foreground/60"
+               )}
+            >
+              Login
+            </Link>
         </nav>
 
         {/* Spacer to push right items */}
         <div className="flex-1 md:hidden"></div>
 
         <div className="flex items-center space-x-2 md:space-x-4">
-          {/* Desktop Dropdown - Removed */}
-          {/* <div className="hidden md:block">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon">
-                  <MoreVertical className="h-5 w-5" />
-                  <span className="sr-only">More Options</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>More</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                {dropdownItems.map((item) => (
-                   <DropdownMenuItem key={item.href} asChild>
-                       <Link href={item.href}>{item.label}</Link>
-                   </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div> */}
-
           {/* Theme Toggle */}
           <ThemeToggle />
 
@@ -125,25 +113,22 @@ export default function Header() {
                        </Link>
                      </SheetClose>
                    ))}
-                   {/* Removed separator and dropdown items from mobile menu */}
-                   {/* <Separator className="my-3"/>
-                   <p className="px-3 text-sm font-medium text-muted-foreground">More Options</p>
-                   {dropdownItems.map((item) => (
-                       <SheetClose key={item.href} asChild>
-                           <Link
-                             href={item.href}
-                             className={cn(
-                               "block px-3 py-2 rounded-md text-base font-medium transition-colors",
-                               pathname === item.href
-                                 ? "bg-primary/10 text-primary"
-                                 : "text-foreground/80 hover:bg-accent hover:text-accent-foreground"
-                              )}
-                             onClick={() => setIsMobileMenuOpen(false)} // Close on click
-                           >
-                             {item.label}
-                           </Link>
-                        </SheetClose>
-                    ))} */}
+                    {/* Mobile Login Link */}
+                    <SheetClose asChild>
+                       <Link
+                          href="/login"
+                          className={cn(
+                           "block px-3 py-2 rounded-md text-base font-medium transition-colors",
+                           pathname === "/login"
+                             ? "bg-primary/10 text-primary"
+                             : "text-foreground/80 hover:bg-accent hover:text/accent-foreground"
+                           )}
+                          onClick={() => setIsMobileMenuOpen(false)} // Close on click
+                        >
+                          Login
+                        </Link>
+                     </SheetClose>
+
                  </nav>
                  {/* Footer section in sheet for Theme Toggle */}
                  <div className="p-4 border-t mt-auto">
