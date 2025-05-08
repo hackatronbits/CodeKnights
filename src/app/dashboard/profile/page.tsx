@@ -1,3 +1,4 @@
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -35,21 +36,21 @@ import Image from "next/image"; // Import Next Image for preview
 
 // Remove profileImageUrl from Zod schema validation, as it's handled by upload
 const profileEditBaseSchema = z.object({
-  fullName: z.string().min(2, "Full name must be at least 2 characters."),
+  fullName: z.string().min(2, "Full name must be at least 2 characters.").optional().or(z.literal("")), // Make optional during edit
   contactNo: z.string().min(10, "Contact number must be at least 10 digits.").optional().or(z.literal("")),
   address: z.string().min(5, "Address seems too short.").optional().or(z.literal("")),
 });
 
 const studentEditSchema = profileEditBaseSchema.extend({
-  pursuingCourse: z.string().min(1, "Please select your current course."),
-  university: z.string().min(1, "Please select your university."),
-  fieldOfInterest: z.string().min(1, "Please select your field of interest."),
+  pursuingCourse: z.string().min(1, "Please select your current course.").optional().or(z.literal("")),
+  university: z.string().min(1, "Please select your university.").optional().or(z.literal("")),
+  fieldOfInterest: z.string().min(1, "Please select your field of interest.").optional().or(z.literal("")),
 });
 
 const alumniEditSchema = profileEditBaseSchema.extend({
-  passOutUniversity: z.string().min(1, "Please select your pass out university."),
-  bio: z.string().min(20, "Bio should be at least 20 characters.").max(500, "Bio cannot exceed 500 characters."),
-  workingField: z.string().min(1, "Please select your working field."),
+  passOutUniversity: z.string().min(1, "Please select your pass out university.").optional().or(z.literal("")),
+  bio: z.string().min(20, "Bio should be at least 20 characters.").max(500, "Bio cannot exceed 500 characters.").optional().or(z.literal("")),
+  workingField: z.string().min(1, "Please select your working field.").optional().or(z.literal("")),
 });
 
 
@@ -93,6 +94,7 @@ export default function MyProfilePage() {
       setPreviewUrl(currentUser.profileImageUrl || null);
       setSelectedFile(null); // Reset file selection when switching modes or user changes
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentUser, form, isEditing]); // Re-populate form when currentUser changes or edit mode toggles
 
   // Handle file selection
@@ -104,12 +106,17 @@ export default function MyProfilePage() {
       const objectUrl = URL.createObjectURL(file);
       setPreviewUrl(objectUrl);
       // Cleanup function to revoke object URL on unmount or new file selection
-      return () => URL.revokeObjectURL(objectUrl);
+      // We need to store the cleanup function associated with this specific URL
+       return () => {
+        console.log("Revoking preview URL:", objectUrl);
+        URL.revokeObjectURL(objectUrl);
+      };
     } else {
       // If file selection is cancelled, revert to original or clear preview
       setSelectedFile(null);
       setPreviewUrl(currentUser?.profileImageUrl || null);
     }
+    return () => {}; // Return an empty cleanup function if no file selected
   };
 
 
@@ -129,14 +136,56 @@ export default function MyProfilePage() {
         console.log("No new profile picture selected.");
       }
 
-      // 2. Prepare data for Firestore update
+      // 2. Prepare data for Firestore update, removing undefined fields
+      // Create a clean object based on form values
       const updateData: Partial<User> = {
-        ...values, // Include form values
-        profileImageUrl: profileImageUrl || "", // Add the new or existing URL (or empty string if removed)
+         fullName: values.fullName || currentUser.fullName, // Use original if empty/undefined
+         contactNo: values.contactNo || "",
+         address: values.address || "",
       };
 
+      // Add type-specific fields only if they are defined in the values
+      if (currentUser.userType === "student") {
+          if (values.pursuingCourse) (updateData as Partial<Student>).pursuingCourse = values.pursuingCourse;
+          if (values.university) (updateData as Partial<Student>).university = values.university;
+          if (values.fieldOfInterest) (updateData as Partial<Student>).fieldOfInterest = values.fieldOfInterest;
+      } else if (currentUser.userType === "alumni") {
+          if (values.passOutUniversity) (updateData as Partial<Alumni>).passOutUniversity = values.passOutUniversity;
+          if (values.bio) (updateData as Partial<Alumni>).bio = values.bio;
+          if (values.workingField) (updateData as Partial<Alumni>).workingField = values.workingField;
+      }
+
+      // Only include profileImageUrl if it's newly uploaded or already exists
+      if (profileImageUrl) {
+          updateData.profileImageUrl = profileImageUrl;
+      } else {
+          // If no image was ever set and none uploaded, don't include the field
+          // If an image existed and was *not* changed, it remains from currentUser init
+          // If an image existed and a *new* one uploaded, it's set above.
+          // If the user wants to *remove* the image, this logic needs enhancement (e.g., a remove button)
+          // For now, we assume absence of upload means keep the old or stay without one.
+          if (!currentUser.profileImageUrl) {
+             // Ensure the field is explicitly removed if no URL exists and none was uploaded
+             // This prevents sending `profileImageUrl: undefined` if it wasn't there before.
+             // However, updateDoc ignores undefined fields, so this might be redundant.
+             // Let's just rely on not setting it if profileImageUrl is null/undefined.
+          }
+      }
+
+
+       // Filter out any explicitly undefined properties just before sending
+       const finalUpdateData = Object.entries(updateData).reduce((acc, [key, value]) => {
+           if (value !== undefined) {
+               acc[key as keyof Partial<User>] = value;
+           }
+           return acc;
+       }, {} as Partial<User>);
+
+
+       console.log("Attempting to update profile with data:", finalUpdateData);
+
       // 3. Update Firestore profile
-      await updateUserProfile(currentUser.uid, updateData);
+      await updateUserProfile(currentUser.uid, finalUpdateData);
 
       toast({ title: "Profile Updated", description: "Your profile has been successfully updated." });
       setIsEditing(false); // Exit edit mode
@@ -144,7 +193,15 @@ export default function MyProfilePage() {
 
     } catch (e: any) {
       console.error("Profile Update Failed:", e);
-      toast({ title: "Update Failed", description: e.message || "Could not update profile.", variant: "destructive" });
+      // Log more details if available
+      console.error("Error Code:", e.code);
+      console.error("Error Message:", e.message);
+      console.error("Stack Trace:", e.stack);
+      toast({
+         title: "Update Failed",
+         description: e.message || `Could not update profile. Code: ${e.code || 'UNKNOWN'}. Check console for details.`,
+         variant: "destructive"
+       });
     } finally {
       setIsLoading(false);
     }
@@ -154,7 +211,8 @@ export default function MyProfilePage() {
     return <div className="flex justify-center items-center h-full"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
 
-  const getInitials = (name: string) => {
+  const getInitials = (name: string | null | undefined) => {
+    if (!name) return '??';
     const names = name.split(' ');
     if (names.length > 1) {
       return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
@@ -264,7 +322,7 @@ export default function MyProfilePage() {
                 )}
                 <div className="flex justify-end space-x-3 pt-4 border-t">
                     <Button type="button" variant="outline" onClick={() => setIsEditing(false)} disabled={isLoading}>Cancel</Button>
-                    <Button type="submit" disabled={isLoading}>
+                    <Button type="submit" disabled={isLoading || form.formState.isSubmitting || !form.formState.isDirty}>
                         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}Save Changes
                     </Button>
                 </div>
