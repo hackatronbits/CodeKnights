@@ -55,14 +55,15 @@ export default function ServicesPage() {
           </Card>
         </section>
 
-        <section className="text-center py-12 bg-gradient-to-r from-primary/80 to-primary rounded-lg">
+        <section className="text-center py-12 bg-gradient-to-r from-primary/80 to-primary rounded-lg group transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl"> {/* Added hover effect */}
            <h2 className="text-3xl font-bold text-primary-foreground mb-4">Ready to Benefit?</h2>
            <p className="text-lg text-primary-foreground/90 mb-8 max-w-xl mx-auto">
               Join MentorConnect today to access these features and accelerate your growth.
             </p>
            <div className="flex justify-center gap-4">
              <Button size="lg" variant="secondary" asChild className="shadow-lg hover:shadow-xl transition-shadow">
-               <Link href="/#signup">Sign Up Now</Link>
+               {/* Changed href from /#signup to / */}
+               <Link href="/">Sign Up Now</Link>
              </Button>
              <Button size="lg" variant="outline" asChild className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/50 hover:bg-primary-foreground/20 shadow-lg hover:shadow-xl transition-shadow">
                <Link href="/login">Login</Link>

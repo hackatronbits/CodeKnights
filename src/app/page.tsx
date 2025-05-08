@@ -5,11 +5,19 @@ import { SignupForm } from "@/components/auth/SignupForm";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle, Users, MessageCircle, BookOpen, UserPlus, Briefcase } from "lucide-react";
+import { Users, CheckCircle, BookOpen, MessageCircle, Briefcase } from "lucide-react";
 import Link from "next/link";
 import { MOCK_TESTIMONIALS } from "@/lib/constants";
 import Image from "next/image";
 import { cn } from "@/lib/utils"; // Import cn
+import dynamic from 'next/dynamic';
+
+// Dynamically import the client-side Globe component wrapper
+const DynamicGlobeClient = dynamic(() => import('@/components/DynamicGlobeClient'), {
+  ssr: false, // Keep SSR false here for the client component wrapper
+  loading: () => <div className="w-full h-full bg-secondary/20 rounded-xl flex items-center justify-center text-muted-foreground animate-pulse">Loading Globe...</div>
+});
+
 
 export default function LandingPage() {
   return (
@@ -28,28 +36,23 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button size="lg" asChild className="shadow-lg hover:shadow-xl transition-shadow">
-                  <Link href="#signup">Get Started Today</Link>
+                   <Link href="/#signup">Get Started Today</Link>
                 </Button>
                 <Button size="lg" variant="outline" asChild className="shadow-lg hover:shadow-xl transition-shadow">
-                   <Link href="#about">Learn More</Link>
+                   <Link href="/about">Learn More</Link>
                 </Button>
               </div>
             </div>
-            <div className="hidden md:block">
-              <Image
-                src="https://picsum.photos/seed/mentorconnect-hero/600/400"
-                alt="Mentorship illustration"
-                width={600}
-                height={400}
-                className="rounded-xl shadow-2xl"
-                data-ai-hint="mentorship collaboration"
-              />
-            </div>
+             {/* Container for the Globe */}
+             <div className="hidden md:block h-[400px] w-full max-w-[600px] mx-auto">
+               {/* Use the dynamically imported client component wrapper */}
+               <DynamicGlobeClient />
+             </div>
           </div>
         </section>
 
         {/* Signup Form Section - Right-aligned */}
-        <section id="signup" className="py-16 md:py-24">
+        <section id="signup" className="py-16 md:py-24"> {/* Keep id for internal links */}
           <div className="container px-4 md:px-8 grid md:grid-cols-12 gap-8 items-center">
             <div className="md:col-span-7 space-y-8">
               <h2 className="text-3xl md:text-4xl font-bold text-foreground">Why Join MentorConnect?</h2>
@@ -71,7 +74,10 @@ export default function LandingPage() {
               </ul>
             </div>
             <div className="md:col-span-5">
-              <Card className="p-6 md:p-8 shadow-xl border-primary border-2">
+              <Card className={cn(
+                "p-6 md:p-8 shadow-xl border-primary/50",
+                "group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl" // Added hover effect
+              )}>
                 <CardHeader className="p-0 mb-6">
                   <CardTitle className="text-2xl md:text-3xl font-bold text-center text-foreground">Join MentorConnect</CardTitle>
                   <CardDescription className="text-center text-muted-foreground">
@@ -105,7 +111,7 @@ export default function LandingPage() {
               {MOCK_TESTIMONIALS.map((testimonial) => (
                 <Card key={testimonial.id} className={cn(
                     "shadow-lg flex flex-col", // Ensure flex-col for consistent height if needed
-                    "group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl"
+                    "group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl" // Added hover effect
                 )}>
                   <CardHeader>
                     <div className="flex items-center space-x-4">
@@ -129,7 +135,7 @@ export default function LandingPage() {
         </section>
 
         {/* About Us Section */}
-        <section id="about" className="py-16 md:py-24">
+        <section id="about" className="py-16 md:py-24"> {/* Keep id for potential direct links */}
           <div className="container px-4 md:px-8 grid md:grid-cols-2 gap-12 items-center">
             <div>
               <Image
@@ -137,7 +143,10 @@ export default function LandingPage() {
                 alt="Team working together"
                 width={500}
                 height={350}
-                className="rounded-xl shadow-xl"
+                className={cn(
+                    "rounded-xl shadow-xl",
+                    "group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl" // Added hover effect
+                 )}
                 data-ai-hint="team collaboration"
               />
             </div>
@@ -149,11 +158,14 @@ export default function LandingPage() {
               <p className="text-lg text-muted-foreground">
                 Our platform is designed to foster meaningful relationships between students seeking direction and alumni willing to share their wisdom. We are passionate about building a supportive community where learning, growth, and success are shared aspirations.
               </p>
+               <Button asChild variant="link" className="p-0 text-primary">
+                  <Link href="/about">Learn More About Us →</Link>
+               </Button>
             </div>
           </div>
         </section>
 
-        {/* Description Section */}
+        {/* How It Works Section */}
         <section className="py-16 md:py-24 bg-secondary/30">
           <div className="container px-4 md:px-8 text-center">
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-foreground">How It Works</h2>
@@ -161,10 +173,13 @@ export default function LandingPage() {
               MentorConnect offers a seamless experience for both students and alumni. Discover how our platform empowers you to achieve your mentorship goals.
             </p>
             <div className="grid md:grid-cols-3 gap-8 text-left">
-              <Card className="shadow-lg group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl">
+              <Card className={cn(
+                "shadow-lg",
+                 "group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl" // Added hover effect
+              )}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <UserPlus className="text-primary" /> For Students
+                    <Users className="text-primary" /> For Students
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-muted-foreground">
@@ -174,7 +189,10 @@ export default function LandingPage() {
                   <p>Access resources and track your mentorship progress.</p>
                 </CardContent>
               </Card>
-              <Card className="shadow-lg group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl">
+              <Card className={cn(
+                  "shadow-lg",
+                  "group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl" // Added hover effect
+              )}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Briefcase className="text-primary" /> For Alumni
@@ -187,7 +205,10 @@ export default function LandingPage() {
                   <p>Manage your mentorship connections and availability.</p>
                 </CardContent>
               </Card>
-              <Card className="shadow-lg group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl">
+              <Card className={cn(
+                 "shadow-lg",
+                 "group transition-all duration-300 ease-in-out hover:scale-[1.03] hover:shadow-2xl" // Added hover effect
+              )}>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <CheckCircle className="text-primary" /> Platform Features

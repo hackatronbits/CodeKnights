@@ -2,7 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, Eye, Heart, Users, CheckCircle, BookOpen, MessageCircle, Search } from "lucide-react"; // Added MessageCircle, Search
+import { Target, Eye, Heart, Users, CheckCircle, BookOpen, MessageCircle, Search } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -58,7 +58,7 @@ export default function AboutPage() {
         </section>
 
         {/* Our Story Section */}
-        <section className="mb-16 grid md:grid-cols-2 gap-12 items-center bg-secondary/20 p-8 rounded-lg">
+        <section className="mb-16 grid md:grid-cols-2 gap-12 items-center bg-secondary/20 p-8 rounded-lg group transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl"> {/* Added hover effect */}
            <div className="order-2 md:order-1 space-y-4">
              <h2 className="text-3xl font-bold text-foreground">Our Story</h2>
              <p className="text-muted-foreground">
@@ -74,7 +74,7 @@ export default function AboutPage() {
                 alt="Illustration of connection or growth"
                 width={500}
                 height={350}
-                className="rounded-xl shadow-lg mx-auto"
+                className="rounded-xl shadow-lg mx-auto group-hover:scale-[1.02] transition-transform duration-300" // Added hover scale
                 data-ai-hint="connection growth"
               />
             </div>
@@ -90,8 +90,8 @@ export default function AboutPage() {
                 { icon: Search, title: "Easy Discovery", description: "Browse profiles and filter results to find the perfect connection." },
                 { icon: BookOpen, title: "Resource Hub", description: "Access helpful articles, university links, and career advice." },
               ].map((feature, index) => (
-                <div key={index} className="flex items-start space-x-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors">
-                   <feature.icon className="w-6 h-6 text-primary mt-1 flex-shrink-0" />
+                <div key={index} className="flex items-start space-x-4 p-4 rounded-lg border bg-card hover:bg-accent/50 transition-colors group hover:scale-[1.03] hover:shadow-xl"> {/* Added hover effect */}
+                   <feature.icon className="w-6 h-6 text-primary mt-1 flex-shrink-0 group-hover:text-primary/80 transition-colors" />
                    <div>
                      <h3 className="font-semibold text-foreground mb-1">{feature.title}</h3>
                      <p className="text-sm text-muted-foreground">{feature.description}</p>
@@ -103,14 +103,15 @@ export default function AboutPage() {
 
 
         {/* Call to Action */}
-        <section className="text-center py-12 bg-gradient-to-r from-primary/80 to-primary rounded-lg">
+        <section className="text-center py-12 bg-gradient-to-r from-primary/80 to-primary rounded-lg group transition-all duration-300 ease-in-out hover:scale-[1.02] hover:shadow-2xl"> {/* Added hover effect */}
            <h2 className="text-3xl font-bold text-primary-foreground mb-4">Ready to Connect?</h2>
            <p className="text-lg text-primary-foreground/90 mb-8 max-w-xl mx-auto">
               Join our growing community today and start your mentorship journey.
             </p>
            <div className="flex justify-center gap-4">
              <Button size="lg" variant="secondary" asChild className="shadow-lg hover:shadow-xl transition-shadow">
-               <Link href="/#signup">Sign Up Now</Link>
+               {/* Changed href from /#signup to / */}
+               <Link href="/">Sign Up Now</Link>
              </Button>
              <Button size="lg" variant="outline" asChild className="bg-primary-foreground/10 text-primary-foreground border-primary-foreground/50 hover:bg-primary-foreground/20 shadow-lg hover:shadow-xl transition-shadow">
                <Link href="/login">Login</Link>
