@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { BookOpen, School, Link as LinkIcon } from "lucide-react";
+import { BookOpen, School, Link as LinkIcon, FileText, Brain, Briefcase } from "lucide-react";
 import Link from 'next/link'; // Use Next.js Link for client-side navigation
 
 // Define university data structure (ideally this would come from constants or backend)
@@ -36,7 +36,7 @@ export default function ResourcesPage() {
             <BookOpen className="mr-3 h-7 w-7 text-primary" /> Educational Resources
           </CardTitle>
           <CardDescription>
-            Explore official websites of various universities for information on programs, admissions, and research.
+            Explore official websites of various universities for information on programs, admissions, and research. More resources like career advice, articles, and study materials coming soon!
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -67,9 +67,17 @@ export default function ResourcesPage() {
               </Card>
             ))}
           </div>
-          <p className="text-sm text-muted-foreground mt-8 text-center">
-            More resources like career advice, articles, and study materials coming soon!
-          </p>
+          <div className="mt-12 text-center border-t pt-8">
+              <h3 className="text-xl font-semibold mb-4 text-foreground">Coming Soon...</h3>
+              <p className="text-muted-foreground max-w-xl mx-auto">
+                We're actively working on expanding this section! Soon you'll find curated study materials, insightful career advice articles, and other valuable resources to support your academic and professional journey.
+              </p>
+              <div className="flex justify-center gap-8 mt-6 text-primary/70">
+                 <FileText className="w-10 h-10" />
+                 <Brain className="w-10 h-10" />
+                 <Briefcase className="w-10 h-10" />
+              </div>
+          </div>
         </CardContent>
       </Card>
     </div>
