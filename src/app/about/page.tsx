@@ -2,7 +2,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Target, Eye, Heart, Users, CheckCircle, BookOpen } from "lucide-react";
+import { Target, Eye, Heart, Users, CheckCircle, BookOpen, MessageCircle, Search } from "lucide-react"; // Added MessageCircle, Search
 import Link from "next/link";
 import Image from "next/image";
 
