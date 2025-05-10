@@ -68,3 +68,38 @@ export interface Message {
   text: string;
   timestamp: number; // Firestore Timestamp converted to number
 }
+
+export interface University {
+  id: string;
+  name: string;
+  link: string;
+  logoSeed?: string;
+  avgRating: number;
+  reviewCount: number;
+  admission: {
+    requirements: string;
+    deadline: string;
+    documents: string[];
+  };
+  visa: {
+    type: string;
+    steps: string[];
+    fee?: string;
+  };
+  scholarships: Array<{
+    name: string;
+    description: string;
+    eligibility: string;
+    link: string;
+  }>;
+}
+
+export interface UniversityReview {
+  id: string;
+  universityId: string;
+  alumniId: string;
+  alumniName: string;
+  rating: number;
+  review: string;
+  timestamp: number;
+}
