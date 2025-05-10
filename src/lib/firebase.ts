@@ -12,13 +12,13 @@ import { getAnalytics, type Analytics } from "firebase/analytics";
 // the "mentorconnect" project. If they are from a different project (e.g., "mymentor-fe595"),
 // authentication and other Firebase services will fail.
 const firebaseConfig: FirebaseOptions = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "YOUR_FALLBACK_API_KEY_FOR_MENTORCONNECT", // Replace with actual or ensure .env.local is correct
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "mentorconnect.firebaseapp.com",
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "mentorconnect",
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "mentorconnect.appspot.com",
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "YOUR_SENDER_ID_FOR_MENTORCONNECT", // Replace or ensure .env.local
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "YOUR_APP_ID_FOR_MENTORCONNECT", // Replace or ensure .env.local
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "YOUR_MEASUREMENT_ID_FOR_MENTORCONNECT" // Optional, replace or ensure .env.local
+  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyCoJPvq29G5VAORlCAy_Yip6Nhs_N9G45Q", // Replace with actual or ensure .env.local is correct
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "mentorconnect-odq1r.firebaseapp.com",
+  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "mentorconnect-odq1r",
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "mentorconnect-odq1r.firebasestorage.app",
+  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID || "4254965563", // Replace or ensure .env.local
+  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:4254965563:web:ad393d28ad85cce4d6a11e", // Replace or ensure .env.local
+  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID || "G-4Q4MS2XE6X" // Optional, replace or ensure .env.local
 };
 
 let app: ReturnType<typeof initializeApp> | undefined;
