@@ -1,6 +1,6 @@
-
 "use client";
 
+import React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -26,7 +26,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useState, useEffect, useRef } from "react";
 import { Loader2, UserCircle, Edit3, Upload } from "lucide-react";
-import type { Student, Alumni, User } from "@/types";
+import type { Student, Alumni, User, StudentProfile, AlumniProfile, BaseUser } from "@/types";
 import { COURSES, UNIVERSITIES_SAMPLE, SKILLS_AND_FIELDS } from "@/lib/constants";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -34,25 +34,50 @@ import { Label } from "@/components/ui/label"; // Import the standard Label for 
 import { uploadProfilePicture } from "@/services/storageService"; // Import the upload service
 import Image from "next/image"; // Import Next Image for preview
 
-// Remove profileImageUrl from Zod schema validation, as it's handled by upload
-const profileEditBaseSchema = z.object({
-  fullName: z.string().min(2, "Full name must be at least 2 characters.").optional().or(z.literal("")), // Make optional during edit
-  contactNo: z.string().min(10, "Contact number must be at least 10 digits.").optional().or(z.literal("")),
-  address: z.string().min(5, "Address seems too short.").optional().or(z.literal("")),
+// Types for the form values
+type StudentFormValues = {
+  fullName: string;
+  contactNo: string;
+  address: string;
+  moreDetail: string;
+  pursuingCourse: string;
+  university: string;
+  fieldOfInterest: string;
+};
+
+type AlumniFormValues = {
+  fullName: string;
+  contactNo: string;
+  address: string;
+  moreDetail: string;
+  passOutUniversity: string;
+  bio: string;
+  workingField: string;
+};
+
+type CurrentProfileFormValues = StudentFormValues | AlumniFormValues;
+
+const baseSchema = z.object({
+  fullName: z.string().optional(),
+  contactNo: z.string().optional(),
+  address: z.string().optional(),
+  moreDetail: z.string().optional(),
 });
 
-const studentEditSchema = profileEditBaseSchema.extend({
-  pursuingCourse: z.string().min(1, "Please select your current course.").optional().or(z.literal("")),
-  university: z.string().min(1, "Please select your university.").optional().or(z.literal("")),
-  fieldOfInterest: z.string().min(1, "Please select your field of interest.").optional().or(z.literal("")),
+const studentSchema = baseSchema.extend({
+  pursuingCourse: z.string().optional(),
+  university: z.string().optional(),
+  fieldOfInterest: z.string().optional(),
 });
 
-const alumniEditSchema = profileEditBaseSchema.extend({
-  passOutUniversity: z.string().min(1, "Please select your pass out university.").optional().or(z.literal("")),
-  bio: z.string().min(20, "Bio should be at least 20 characters.").max(500, "Bio cannot exceed 500 characters.").optional().or(z.literal("")),
-  workingField: z.string().min(1, "Please select your working field.").optional().or(z.literal("")),
+const alumniSchema = baseSchema.extend({
+  passOutUniversity: z.string().optional(),
+  bio: z.string().optional(),
+  workingField: z.string().optional(),
 });
 
+const currentProfileFormSchema = studentSchema.or(alumniSchema);
+type FormSchema = z.infer<typeof currentProfileFormSchema>;
 
 export default function MyProfilePage() {
   const { currentUser, updateUserProfile, loading: authLoading } = useAuth();
@@ -63,12 +88,8 @@ export default function MyProfilePage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null); // Ref for file input
 
-  // Determine schema based on user type (profileImageUrl removed from schema)
-  const currentProfileSchema = currentUser?.userType === 'student' ? studentEditSchema : alumniEditSchema;
-  type CurrentProfileFormValues = z.infer<typeof currentProfileSchema>;
-
-  const form = useForm<CurrentProfileFormValues>({
-    resolver: zodResolver(currentProfileSchema),
+  const form = useForm<FormSchema>({
+    resolver: zodResolver(currentProfileFormSchema),
     defaultValues: {}, // Will be populated by useEffect
   });
 
@@ -79,6 +100,7 @@ export default function MyProfilePage() {
         fullName: currentUser.fullName || "",
         contactNo: currentUser.contactNo || "",
         address: currentUser.address || "",
+        moreDetail: (currentUser as any).moreDetail || "",
         ...(currentUser.userType === "student" && {
           pursuingCourse: (currentUser as Student).pursuingCourse || "",
           university: (currentUser as Student).university || "",
@@ -119,8 +141,7 @@ export default function MyProfilePage() {
     return () => {}; // Return an empty cleanup function if no file selected
   };
 
-
-  async function onSubmit(values: CurrentProfileFormValues) {
+  async function onSubmit(values: FormSchema) {
     if (!currentUser) return;
     setIsLoading(true);
 
@@ -137,54 +158,49 @@ export default function MyProfilePage() {
       }
 
       // 2. Prepare data for Firestore update, removing undefined fields
-      // Create a clean object based on form values
-      const updateData: Partial<User> = {
-         fullName: values.fullName || currentUser.fullName, // Use original if empty/undefined
-         contactNo: values.contactNo || "",
-         address: values.address || "",
+      let updateData: any = {
+        fullName: values.fullName || currentUser.fullName,
+        contactNo: values.contactNo || "",
+        address: values.address || "",
+        moreDetail: values.moreDetail || "",
       };
-
-      // Add type-specific fields only if they are defined in the values
       if (currentUser.userType === "student") {
-          if (values.pursuingCourse) (updateData as Partial<Student>).pursuingCourse = values.pursuingCourse;
-          if (values.university) (updateData as Partial<Student>).university = values.university;
-          if (values.fieldOfInterest) (updateData as Partial<Student>).fieldOfInterest = values.fieldOfInterest;
-      } else if (currentUser.userType === "alumni") {
-          if (values.passOutUniversity) (updateData as Partial<Alumni>).passOutUniversity = values.passOutUniversity;
-          if (values.bio) (updateData as Partial<Alumni>).bio = values.bio;
-          if (values.workingField) (updateData as Partial<Alumni>).workingField = values.workingField;
+        if ("pursuingCourse" in values) {
+          updateData["pursuingCourse"] = values.pursuingCourse || (currentUser as Student).pursuingCourse || "";
+        }
+        if ("university" in values) {
+          updateData["university"] = values.university || (currentUser as Student).university || "";
+        }
+        if ("fieldOfInterest" in values) {
+          updateData["fieldOfInterest"] = values.fieldOfInterest || (currentUser as Student).fieldOfInterest || "";
+        }
       }
-
-      // Only include profileImageUrl if it's newly uploaded or already exists
+      if (currentUser.userType === "alumni") {
+        if ("passOutUniversity" in values) {
+          updateData["passOutUniversity"] = values.passOutUniversity || (currentUser as Alumni).passOutUniversity || "";
+        }
+        if ("bio" in values) {
+          updateData["bio"] = values.bio || (currentUser as Alumni).bio || "";
+        }
+        if ("workingField" in values) {
+          updateData["workingField"] = values.workingField || (currentUser as Alumni).workingField || "";
+        }
+      }
       if (profileImageUrl) {
-          updateData.profileImageUrl = profileImageUrl;
-      } else {
-          // If no image was ever set and none uploaded, don't include the field
-          // If an image existed and was *not* changed, it remains from currentUser init
-          // If an image existed and a *new* one uploaded, it's set above.
-          // If the user wants to *remove* the image, this logic needs enhancement (e.g., a remove button)
-          // For now, we assume absence of upload means keep the old or stay without one.
-          if (!currentUser.profileImageUrl) {
-             // Ensure the field is explicitly removed if no URL exists and none was uploaded
-             // This prevents sending `profileImageUrl: undefined` if it wasn't there before.
-             // However, updateDoc ignores undefined fields, so this might be redundant.
-             // Let's just rely on not setting it if profileImageUrl is null/undefined.
-          }
+        updateData["profileImageUrl"] = profileImageUrl;
       }
 
+      // Filter out any undefined values
+      const finalUpdateData = Object.entries(updateData).reduce((acc: any, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = value;
+        }
+        return acc;
+      }, {});
 
-       // Filter out any explicitly undefined properties just before sending
-       const finalUpdateData = Object.entries(updateData).reduce((acc, [key, value]) => {
-           if (value !== undefined) {
-               acc[key as keyof Partial<User>] = value;
-           }
-           return acc;
-       }, {} as Partial<User>);
+      console.log("Attempting to update profile with data:", finalUpdateData);
 
-
-       console.log("Attempting to update profile with data:", finalUpdateData);
-
-      // 3. Update Firestore profile
+      // Update Firestore profile
       await updateUserProfile(currentUser.uid, finalUpdateData);
 
       toast({ title: "Profile Updated", description: "Your profile has been successfully updated." });
@@ -193,15 +209,11 @@ export default function MyProfilePage() {
 
     } catch (e: any) {
       console.error("Profile Update Failed:", e);
-      // Log more details if available
-      console.error("Error Code:", e.code);
-      console.error("Error Message:", e.message);
-      console.error("Stack Trace:", e.stack);
-      toast({
-         title: "Update Failed",
-         description: e.message || `Could not update profile. Code: ${e.code || 'UNKNOWN'}. Check console for details.`,
-         variant: "destructive"
-       });
+      toast({ 
+        title: "Update Failed", 
+        description: e.message || "Could not update profile. Please try again.",
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }
@@ -219,7 +231,6 @@ export default function MyProfilePage() {
     }
     return name.substring(0, 2).toUpperCase();
   };
-
 
   return (
     <div className="space-y-8">
@@ -259,6 +270,7 @@ export default function MyProfilePage() {
                     <div><Label className="font-semibold text-muted-foreground">Pursuing Course:</Label><p>{(currentUser as Student).pursuingCourse || "Not set"}</p></div>
                     <div><Label className="font-semibold text-muted-foreground">University:</Label><p>{(currentUser as Student).university || "Not set"}</p></div>
                     <div><Label className="font-semibold text-muted-foreground">Field of Interest:</Label><p>{(currentUser as Student).fieldOfInterest || "Not set"}</p></div>
+                    <div className="md:col-span-2"><Label className="font-semibold text-muted-foreground">More Detail:</Label><p className="whitespace-pre-wrap">{(currentUser as any).moreDetail || "Not set"}</p></div>
                   </>
                 )}
                 {currentUser.userType === "alumni" && (
@@ -266,6 +278,7 @@ export default function MyProfilePage() {
                     <div><Label className="font-semibold text-muted-foreground">Passed Out University:</Label><p>{(currentUser as Alumni).passOutUniversity || "Not set"}</p></div>
                     <div><Label className="font-semibold text-muted-foreground">Working Field:</Label><p>{(currentUser as Alumni).workingField || "Not set"}</p></div>
                     <div className="md:col-span-2"><Label className="font-semibold text-muted-foreground">Bio:</Label><p className="whitespace-pre-wrap">{(currentUser as Alumni).bio || "Not set"}</p></div>
+                    <div className="md:col-span-2"><Label className="font-semibold text-muted-foreground">More Detail:</Label><p className="whitespace-pre-wrap">{(currentUser as any).moreDetail || "Not set"}</p></div>
                   </>
                 )}
               </div>
@@ -301,16 +314,58 @@ export default function MyProfilePage() {
                  </FormItem>
 
 
-                <FormField control={form.control} name="fullName" render={({ field }) => ( <FormItem><FormLabel>Full Name</FormLabel><FormControl><Input {...field} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="fullName" render={({ field }) => ( 
+                  <FormItem>
+                    <FormLabel>Full Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} readOnly={currentUser.userType === "student"} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem> 
+                )} />
                 {/* Removed profileImageUrl FormField */}
                 <FormField control={form.control} name="contactNo" render={({ field }) => ( <FormItem><FormLabel>Contact Number</FormLabel><FormControl><Input type="tel" {...field} /></FormControl><FormMessage /></FormItem> )} />
                 <FormField control={form.control} name="address" render={({ field }) => ( <FormItem><FormLabel>Address</FormLabel><FormControl><Textarea {...field} /></FormControl><FormMessage /></FormItem> )} />
+                <FormField control={form.control} name="moreDetail" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>More Detail</FormLabel>
+                    <FormControl>
+                      <Textarea className="min-h-[80px]" placeholder="Add more about yourself..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
 
                 {currentUser.userType === "student" && (
                   <>
-                    <FormField control={form.control} name="pursuingCourse" render={({ field }) => ( <FormItem><FormLabel>Current Pursuing Course</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select course" /></SelectTrigger></FormControl><SelectContent>{COURSES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )}/>
-                    <FormField control={form.control} name="university" render={({ field }) => ( <FormItem><FormLabel>Name of University</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select university" /></SelectTrigger></FormControl><SelectContent>{UNIVERSITIES_SAMPLE.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )}/>
-                    <FormField control={form.control} name="fieldOfInterest" render={({ field }) => ( <FormItem><FormLabel>Field of Interest</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Select interest" /></SelectTrigger></FormControl><SelectContent>{SKILLS_AND_FIELDS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}</SelectContent></Select><FormMessage /></FormItem> )}/>
+                    <FormField control={form.control} name="pursuingCourse" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Current Pursuing Course</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={true}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select course" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>{COURSES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}/>
+                    <FormField control={form.control} name="university" render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name of University</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={true}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select university" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>{UNIVERSITIES_SAMPLE.map(u => <SelectItem key={u} value={u}>{u}</SelectItem>)}</SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}/>
                   </>
                 )}
                 {currentUser.userType === "alumni" && (

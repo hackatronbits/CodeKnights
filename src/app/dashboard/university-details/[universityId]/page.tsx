@@ -42,6 +42,11 @@ export default function UniversityDetailsPage({ params }: { params: { university
   const university: University | undefined = UNIVERSITIES.find(u => u.id === params.universityId);
   if (!university) return notFound();
 
+  // Only allow alumni to review if their passOutUniversity matches the university name
+  const canReview = currentUser?.userType === 'alumni' && (
+    currentUser.passOutUniversity?.toLowerCase().trim() === university.name.toLowerCase().trim()
+  );
+
   // Fetch reviews from local data file
   useEffect(() => {
     if (!university) return;
@@ -168,7 +173,7 @@ export default function UniversityDetailsPage({ params }: { params: { university
         </CardContent>
       </Card>
 
-      {currentUser?.userType === 'alumni' && (
+      {canReview && (
         <Card>
           <CardHeader><CardTitle>Submit Your Review</CardTitle></CardHeader>
           <CardContent>

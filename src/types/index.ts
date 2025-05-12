@@ -11,6 +11,7 @@ export interface BaseUser {
   isProfileComplete: boolean;
   createdAt: number; // Timestamp represented as number (milliseconds since epoch)
   updatedAt?: number; // Timestamp represented as number
+  moreDetail?: string; // Added for extra profile info
 }
 
 export interface StudentProfile {
@@ -18,6 +19,7 @@ export interface StudentProfile {
   university?: string;
   fieldOfInterest?: string;
   myMentors?: string[]; // Array of Alumni UIDs
+  pendingMentorRequests?: string[]; // Alumni UIDs the student has requested
 }
 
 export interface AlumniProfile {
@@ -25,6 +27,7 @@ export interface AlumniProfile {
   bio?: string;
   workingField?: string;
   myMentees?: string[]; // Array of Student UIDs
+  pendingMenteeRequests?: string[]; // Student UIDs who requested this alumni
 }
 
 export type Student = BaseUser & { userType: "student" } & StudentProfile;
