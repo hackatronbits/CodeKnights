@@ -2,8 +2,7 @@
 
 import { notFound } from 'next/navigation';
 import { UNIVERSITIES } from '@/lib/universitiesData';
-import { getFirebaseServices } from '@/lib/firebase';
-import { collection, addDoc, getDocs, query, where, doc, setDoc } from 'firebase/firestore';
+import { UNIVERSITY_REVIEWS } from '@/lib/universityReviewsData';
 import { useAuth } from '@/contexts/AuthContext';
 import { useEffect, useState } from 'react';
 import { Star } from 'lucide-react';
@@ -43,47 +42,29 @@ export default function UniversityDetailsPage({ params }: { params: { university
   const university: University | undefined = UNIVERSITIES.find(u => u.id === params.universityId);
   if (!university) return notFound();
 
-  // Fetch reviews from Firestore
+  // Fetch reviews from local data file
   useEffect(() => {
     if (!university) return;
-    const universityId = university && university.id;
-    async function fetchReviews() {
-      setLoading(true);
-      const { db: firestoreDb } = getFirebaseServices();
-      if (!firestoreDb || !universityId) {
-        setReviews([]);
-        setLoading(false);
-        return;
-      }
-      const q = query(collection(firestoreDb, 'universities', universityId, 'reviews'));
-      const snap = await getDocs(q);
-      const data: UniversityReview[] = [];
-      let mine: UniversityReview | null = null;
-      snap.forEach(docSnap => {
-        const r = { id: docSnap.id, ...docSnap.data() } as UniversityReview;
-        data.push(r);
-        if (currentUser?.userType === 'alumni' && r.alumniId === currentUser.uid) mine = r;
-      });
-      setReviews(data);
-      setMyReview(mine);
-      setRating(mine && typeof (mine as UniversityReview).rating === 'number' ? (mine as UniversityReview).rating : 0);
-      setReviewText(mine && typeof (mine as UniversityReview).review === 'string' ? (mine as UniversityReview).review : '');
-      setLoading(false);
+    setLoading(true);
+    const data: UniversityReview[] = UNIVERSITY_REVIEWS.filter(r => r.universityId === university.id);
+    let mine: UniversityReview | null = null;
+    if (currentUser?.userType === 'alumni') {
+      mine = data.find(r => r.alumniId === currentUser.uid) || null;
     }
-    fetchReviews();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    setReviews(data);
+    setMyReview(mine);
+    setRating(mine && typeof mine.rating === 'number' ? mine.rating : 0);
+    setReviewText(mine && typeof mine.review === 'string' ? mine.review : '');
+    setLoading(false);
   }, [university?.id, currentUser?.uid, currentUser?.userType]);
 
-  // Submit review (alumni only)
+  // Submit review (alumni only, local data)
   async function handleSubmitReview() {
     if (!currentUser || currentUser.userType !== 'alumni' || !university) return;
     setSubmitting(true);
-    const { db: firestoreDb } = getFirebaseServices();
-    if (!firestoreDb) {
-      setSubmitting(false);
-      return;
-    }
-    const reviewData = {
+    // Simulate saving to local data file
+    const reviewData: UniversityReview = {
+      id: myReview ? myReview.id : `${Date.now()}_${currentUser.uid}`,
       alumniId: currentUser.uid,
       alumniName: currentUser.fullName,
       rating,
@@ -93,22 +74,19 @@ export default function UniversityDetailsPage({ params }: { params: { university
     };
     if (myReview) {
       // Update
-      await setDoc(doc(firestoreDb, 'universities', university.id, 'reviews', myReview.id), reviewData);
+      const idx = UNIVERSITY_REVIEWS.findIndex(r => r.id === myReview.id);
+      if (idx !== -1) UNIVERSITY_REVIEWS[idx] = reviewData;
     } else {
       // Add
-      await addDoc(collection(firestoreDb, 'universities', university.id, 'reviews'), reviewData);
+      UNIVERSITY_REVIEWS.push(reviewData);
     }
     setSubmitting(false);
     // Refresh reviews
-    const q = query(collection(firestoreDb, 'universities', university.id, 'reviews'));
-    const snap = await getDocs(q);
-    const data: UniversityReview[] = [];
+    const data: UniversityReview[] = UNIVERSITY_REVIEWS.filter(r => r.universityId === university.id);
     let mine: UniversityReview | null = null;
-    snap.forEach(docSnap => {
-      const r = { id: docSnap.id, ...docSnap.data() } as UniversityReview;
-      data.push(r);
-      if (currentUser?.userType === 'alumni' && r.alumniId === currentUser.uid) mine = r;
-    });
+    if (currentUser?.userType === 'alumni') {
+      mine = data.find(r => r.alumniId === currentUser.uid) || null;
+    }
     setReviews(data);
     setMyReview(mine);
   }
